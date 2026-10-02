@@ -1,0 +1,19 @@
+# .NET
+bin/
+obj/
+*.user
+TestResults/
+
+# Node / Angular
+node_modules/
+dist/
+.angular/
+
+# Local overrides
+.env
+.DS_Store
+.vscode/
+.idea/
+
+# CI output
+artifacts/
