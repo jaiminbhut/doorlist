@@ -41,7 +41,6 @@ public sealed class ShiplogDbContext(DbContextOptions<ShiplogDbContext> options)
 
         builder.Entity<Release>(release =>
         {
-            release.Property(r => r.Version).HasMaxLength(Release.VersionMaxLength);
             release.Property(r => r.VersionName).HasMaxLength(Release.VersionMaxLength);
             release.Property(r => r.Notes).HasMaxLength(Release.NotesMaxLength);
             release.Property(r => r.Platform).HasConversion<string>().HasMaxLength(20);
@@ -55,7 +54,11 @@ public sealed class ShiplogDbContext(DbContextOptions<ShiplogDbContext> options)
             release.HasOne(r => r.App).WithMany().HasForeignKey(r => r.AppId).OnDelete(DeleteBehavior.Restrict);
             release.HasOne(r => r.Environment).WithMany().HasForeignKey(r => r.EnvironmentId).OnDelete(DeleteBehavior.Restrict);
 
-            release.HasIndex(r => new { r.AppId, r.EnvironmentId, r.Platform, r.Version }).IsUnique();
+            // No filter: a release without a build number is still unique per
+            // version name (SQL Server treats NULLs as equal in a unique index).
+            release.HasIndex(r => new { r.AppId, r.EnvironmentId, r.Platform, r.VersionName, r.BuildNumber })
+                .IsUnique()
+                .HasFilter(null);
             release.HasMany(r => r.Checklist).WithOne(i => i.Release).HasForeignKey(i => i.ReleaseId);
         });
 
