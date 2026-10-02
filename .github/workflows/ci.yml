@@ -1,0 +1,102 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  api:
+    name: API build, tests and migration checks
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: api
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-dotnet@v5
+        with:
+          global-json-file: api/global.json
+
+      - run: dotnet restore
+      - run: dotnet tool restore
+
+      # Warnings are errors (Directory.Build.props), so this is also the
+      # analyzer and code-style gate.
+      - run: dotnet build --no-restore --configuration Release
+
+      # Integration tests start their own SQL Server with Testcontainers and
+      # apply the committed migrations to it.
+      - run: dotnet test --no-build --configuration Release
+
+      - name: Fail if the model has changes with no migration
+        run: dotnet ef migrations has-pending-model-changes --project src/Shiplog.Api --configuration Release --no-build
+
+      - name: Generate the idempotent migration script for review
+        run: dotnet ef migrations script --idempotent --project src/Shiplog.Api --configuration Release --no-build --output ../artifacts/migrations.sql
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: migrations-sql
+          path: artifacts/migrations.sql
+
+  web:
+    name: Web lint, tests and build
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: web
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: web/package-lock.json
+
+      - run: npm ci
+      - run: npm run format:check
+      - run: npm run lint
+      - run: npm test -- --watch=false
+      - run: npm run build
+
+  compose:
+    name: Full stack smoke test
+    needs: [api, web]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+
+      - run: docker compose up --detach --build
+
+      - name: Wait for the API through nginx
+        run: |
+          for attempt in $(seq 1 60); do
+            if curl --fail --silent http://localhost:8080/api/health; then
+              echo " after ${attempt} attempts"
+              exit 0
+            fi
+            sleep 2
+          done
+          echo "API never became healthy"
+          exit 1
+
+      - name: Create and list an app through nginx
+        run: |
+          curl --fail --silent -H "Content-Type: application/json" -d '{"name":"CI smoke"}' http://localhost:8080/api/apps
+          curl --fail --silent http://localhost:8080/api/apps | grep -q '"CI smoke"'
+
+      - if: failure()
+        run: docker compose logs
+
+      - if: always()
+        run: docker compose down --volumes
