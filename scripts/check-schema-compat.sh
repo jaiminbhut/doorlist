@@ -55,6 +55,7 @@ wait_until() {
 
 base_sha=$(git -C "$root" rev-parse --short "$base_ref")
 head_sha=$(git -C "$root" rev-parse --short HEAD)
+git -C "$root" diff --quiet HEAD -- api || head_sha="${head_sha}-dirty"
 
 step "Building the API from ${base_ref} (${base_sha}) and migrations from both versions"
 git -C "$root" worktree add --detach "$work/base" "$base_ref" >/dev/null 2>&1
