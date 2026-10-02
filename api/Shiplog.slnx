@@ -1,0 +1,8 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/Shiplog.Api/Shiplog.Api.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/Shiplog.Api.Tests/Shiplog.Api.Tests.csproj" />
+  </Folder>
+</Solution>

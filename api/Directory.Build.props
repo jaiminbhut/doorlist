@@ -1,0 +1,11 @@
+<Project>
+  <!--
+    Shared by every project in the solution. Warnings fail the build, and the
+    recommended .NET analyzers run on every build, locally and in CI.
+  -->
+  <PropertyGroup>
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+    <AnalysisLevel>latest-recommended</AnalysisLevel>
+    <EnforceCodeStyleInBuild>true</EnforceCodeStyleInBuild>
+  </PropertyGroup>
+</Project>
