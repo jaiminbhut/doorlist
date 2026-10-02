@@ -69,6 +69,20 @@ jobs:
       - run: npm test -- --watch=false
       - run: npm run build
 
+  schema-compat:
+    name: Running API survives this PR's migrations
+    # Only pull requests have a "running version" to compare with: main.
+    if: github.event_name == 'pull_request'
+    needs: [api]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+
+      - name: Run main's API against this PR's migrations
+        run: scripts/check-schema-compat.sh "${{ github.event.pull_request.base.sha }}"
+
   compose:
     name: Full stack smoke test
     needs: [api, web]

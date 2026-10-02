@@ -65,7 +65,8 @@ api/                     ASP.NET Core API, EF Core, migrations, tests
   tests/Shiplog.Api.Tests/
 web/                     Angular app
 docs/adr/                Architecture decision records
-.github/workflows/ci.yml CI: build, tests, migration checks, full-stack smoke test
+.github/workflows/ci.yml CI: build, tests, migration checks, schema compatibility, smoke test
+scripts/                 check-schema-compat.sh
 docker-compose.yml       Local stack
 ```
 
@@ -76,7 +77,7 @@ docker-compose.yml       Local stack
 | 1. Skeleton ✅ | `docker compose up` runs end to end; CI on every pull request |
 | 2. Domain and auth ✅ | Apps, environments, releases, checklists; ASP.NET Core Identity + JWT with roles; Angular release board |
 | 3. Deploy pipeline | Images to GHCR; release workflow with env verification, DB backup, migration bundle, API rollout and health check; staging and production; Content-Security-Policy |
-| 4. Expand/contract | A breaking schema change shipped across two releases with no downtime, documented in `docs/migrations.md` |
+| 4. Expand/contract | A CI check that the running API survives each PR's migrations; a breaking schema change (splitting `Version`) shipped in three steps that each pass it, documented in [`docs/migrations.md`](docs/migrations.md) |
 | 5. Polish | Demo account, screenshots, `v1.0.0` |
 
 ## Contributing
