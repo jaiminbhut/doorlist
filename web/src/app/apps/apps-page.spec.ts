@@ -1,6 +1,9 @@
 import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { provideRouter } from '@angular/router';
+import { Role } from '../core/auth';
+import { provideFakeAuth } from '../testing/fake-auth';
 import { AppSummary } from './apps-api';
 import { AppsPage } from './apps-page';
 
@@ -29,17 +32,34 @@ describe('AppsPage', () => {
     createdAt: '2026-10-02T09:00:00Z',
   });
 
-  beforeEach(async () => {
+  const render = async (...roles: Role[]) => {
     TestBed.configureTestingModule({
       imports: [AppsPage],
-      providers: [provideHttpClient(), provideHttpClientTesting()],
+      providers: [
+        provideRouter([]),
+        provideHttpClient(),
+        provideHttpClientTesting(),
+        provideFakeAuth(...roles),
+      ],
     });
     fixture = TestBed.createComponent(AppsPage);
     http = TestBed.inject(HttpTestingController);
     await settle();
-  });
+  };
+
+  beforeEach(() => render('Lead'));
 
   afterEach(() => http.verify());
+
+  it('hides the add form from anyone but a lead', async () => {
+    TestBed.resetTestingModule();
+    await render('Developer');
+    http.expectOne('/api/apps').flush([app(1, 'Field App')]);
+    await settle();
+
+    expect(page().querySelector('#app-name')).toBeNull();
+    expect(page().querySelector('.app-name')?.textContent).toContain('Field App');
+  });
 
   it('lists the apps from the API', async () => {
     http.expectOne('/api/apps').flush([app(1, 'Field App')]);

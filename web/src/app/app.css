@@ -4,6 +4,14 @@
   margin-bottom: 32px;
 }
 
+.header-row {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px 24px;
+}
+
 .site-header h1 {
   margin: 0;
   font-size: 1.5rem;
@@ -16,8 +24,29 @@
   font-size: 0.875rem;
 }
 
+nav {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 16px;
+}
+
+nav a {
+  font-weight: 600;
+  text-decoration: none;
+}
+
+nav a.active {
+  text-decoration: underline;
+  text-underline-offset: 4px;
+}
+
+nav button {
+  padding: 6px 12px;
+}
+
 .container {
-  max-width: 720px;
+  max-width: 760px;
   margin: 0 auto;
   padding: 0 16px;
 }

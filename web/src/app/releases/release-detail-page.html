@@ -1,0 +1,74 @@
+<p><a routerLink="/releases">← All releases</a></p>
+
+@if (loadError(); as message) {
+  <p class="error" role="alert">{{ message }}</p>
+} @else if (release(); as release) {
+  <section class="panel" aria-labelledby="release-heading">
+    <header>
+      <h2 id="release-heading">{{ release.appName }} {{ release.version }}</h2>
+      <p class="muted">
+        {{ platformLabels[release.platform] }} → {{ release.environmentName }}
+        @if (release.isProduction) {
+          <span class="badge production">production</span>
+        }
+        @if (isShipped()) {
+          <span class="badge shipped">shipped</span>
+        }
+      </p>
+    </header>
+
+    @if (release.notes) {
+      <p class="notes">{{ release.notes }}</p>
+    }
+
+    <h3>Checklist</h3>
+    <ul class="list checklist">
+      @for (item of release.checklist; track item.id) {
+        <li>
+          <label class="checkbox">
+            <input
+              type="checkbox"
+              [checked]="item.isDone"
+              [disabled]="!canEdit() || busy()"
+              (change)="toggle(item, $any($event.target).checked)"
+            />
+            {{ item.title }}
+          </label>
+          @if (item.isDone && item.doneBy) {
+            <span class="muted">{{ item.doneBy }}</span>
+          }
+        </li>
+      }
+    </ul>
+
+    @if (isShipped()) {
+      <p class="muted shipped-by">
+        Shipped by {{ release.shippedBy }} on {{ release.shippedAt | date: 'medium' }}.
+      </p>
+    } @else if (auth.canWorkOnReleases()) {
+      <div class="row ship-row">
+        <button
+          class="primary"
+          type="button"
+          [disabled]="shipBlockedBy() !== null || busy()"
+          (click)="ship()"
+        >
+          Ship to {{ release.environmentName }}
+        </button>
+      </div>
+      @if (shipBlockedBy(); as reason) {
+        <p class="notice">{{ reason }}</p>
+      }
+    }
+
+    @if (actionError(); as message) {
+      <p class="error" role="alert">{{ message }}</p>
+    }
+
+    <p class="muted">
+      Created by {{ release.createdBy }} on {{ release.createdAt | date: 'medium' }}.
+    </p>
+  </section>
+} @else {
+  <p class="muted">Loading…</p>
+}

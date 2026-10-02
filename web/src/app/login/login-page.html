@@ -1,0 +1,28 @@
+<section class="panel login" aria-labelledby="login-heading">
+  <header>
+    <h2 id="login-heading">Sign in</h2>
+    <p class="muted">Use the account your lead set up for you.</p>
+  </header>
+
+  <form [formGroup]="form" (ngSubmit)="signIn()">
+    <div class="field">
+      <label for="email">Email</label>
+      <input id="email" type="email" autocomplete="username" formControlName="email" />
+    </div>
+    <div class="field">
+      <label for="password">Password</label>
+      <input
+        id="password"
+        type="password"
+        autocomplete="current-password"
+        formControlName="password"
+      />
+    </div>
+    <button class="primary" type="submit" [disabled]="form.invalid || signingIn()">
+      {{ signingIn() ? 'Signing in…' : 'Sign in' }}
+    </button>
+    @if (error(); as message) {
+      <p class="error" role="alert">{{ message }}</p>
+    }
+  </form>
+</section>

@@ -2,16 +2,18 @@ import { DatePipe } from '@angular/common';
 import { HttpErrorResponse } from '@angular/common/http';
 import { Component, OnInit, inject, signal } from '@angular/core';
 import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
+import { RouterLink } from '@angular/router';
+import { AuthService } from '../core/auth';
 import { APP_NAME_MAX_LENGTH, AppSummary, AppsApi } from './apps-api';
 
 @Component({
   selector: 'app-apps-page',
-  imports: [ReactiveFormsModule, DatePipe],
+  imports: [ReactiveFormsModule, DatePipe, RouterLink],
   templateUrl: './apps-page.html',
-  styleUrl: './apps-page.css',
 })
 export class AppsPage implements OnInit {
   private readonly api = inject(AppsApi);
+  protected readonly auth = inject(AuthService);
 
   protected readonly maxLength = APP_NAME_MAX_LENGTH;
   protected readonly apps = signal<AppSummary[]>([]);
