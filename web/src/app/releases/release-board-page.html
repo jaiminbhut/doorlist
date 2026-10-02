@@ -42,8 +42,19 @@
           <input
             id="release-version"
             type="text"
-            placeholder="2.4.0 (118)"
-            formControlName="version"
+            placeholder="2.4.0"
+            formControlName="versionName"
+          />
+        </div>
+        <div class="field">
+          <label for="release-build">Build number <span class="muted">(optional)</span></label>
+          <input
+            id="release-build"
+            type="number"
+            min="0"
+            step="1"
+            placeholder="118"
+            formControlName="buildNumber"
           />
         </div>
       </div>

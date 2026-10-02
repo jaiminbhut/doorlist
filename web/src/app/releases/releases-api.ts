@@ -18,7 +18,10 @@ export interface ReleaseSummary {
   environmentId: number;
   environmentName: string;
   isProduction: boolean;
+  /** Display form, e.g. "2.4.0 (118)". */
   version: string;
+  versionName: string;
+  buildNumber: number | null;
   platform: Platform;
   status: ReleaseStatus;
   checklistDone: number;
@@ -44,7 +47,10 @@ export interface ReleaseDetail {
   environmentName: string;
   isProduction: boolean;
   environmentApiUrl: string;
+  /** Display form, e.g. "2.4.0 (118)". */
   version: string;
+  versionName: string;
+  buildNumber: number | null;
   platform: Platform;
   notes: string | null;
   status: ReleaseStatus;
@@ -59,7 +65,8 @@ export interface NewRelease {
   appId: number;
   environmentId: number;
   platform: Platform;
-  version: string;
+  versionName: string;
+  buildNumber: number | null;
   notes: string | null;
 }
 

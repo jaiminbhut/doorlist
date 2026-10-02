@@ -33,6 +33,9 @@ public sealed class ShiplogApiFactory : WebApplicationFactory<Program>, IAsyncLi
 
     private readonly ConcurrentDictionary<string, string> _tokens = new();
 
+    /// <summary>The test SQL Server, for tests that need their own database on it.</summary>
+    public string ConnectionString => _database.GetConnectionString();
+
     protected override void ConfigureWebHost(IWebHostBuilder builder)
     {
         builder.UseSetting("ConnectionStrings:Shiplog", _database.GetConnectionString());
