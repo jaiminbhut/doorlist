@@ -19,8 +19,8 @@ public sealed class ReleaseVersionTests
 
     [Theory]
     [MemberData(nameof(Versions))]
-    public void ParseSplitsANameAndATrailingBuildNumber(string version, string name, int? build) =>
-        Assert.Equal((name, build), ReleaseVersion.Parse(version));
+    public void LegacyParseSplitsANameAndATrailingBuildNumber(string version, string name, int? build) =>
+        Assert.Equal((name, build), LegacyVersion.Parse(version));
 
     [Theory]
     [InlineData("2.4.0", 118, "2.4.0 (118)")]
