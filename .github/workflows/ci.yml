@@ -90,10 +90,15 @@ jobs:
           echo "API never became healthy"
           exit 1
 
-      - name: Create and list an app through nginx
+      - name: Sign in, then create and list an app through nginx
         run: |
-          curl --fail --silent -H "Content-Type: application/json" -d '{"name":"CI smoke"}' http://localhost:8080/api/apps
-          curl --fail --silent http://localhost:8080/api/apps | grep -q '"CI smoke"'
+          base=http://localhost:8080/api
+          token=$(curl --fail --silent -H "Content-Type: application/json" \
+            -d '{"email":"lead@example.com","password":"Shiplog-demo-2026"}' "$base/auth/login" | jq -r .accessToken)
+          test "$(curl --silent --output /dev/null --write-out '%{http_code}' "$base/apps")" = 401
+          curl --fail --silent -H "Authorization: Bearer $token" -H "Content-Type: application/json" \
+            -d '{"name":"CI smoke"}' "$base/apps"
+          curl --fail --silent -H "Authorization: Bearer $token" "$base/apps" | grep -q '"CI smoke"'
 
       - if: failure()
         run: docker compose logs

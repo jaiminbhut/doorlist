@@ -1,7 +1,9 @@
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Shiplog.Api.Auth;
 using Shiplog.Api.Data;
+using Shiplog.Api.Environments;
 
 namespace Shiplog.Api.Apps;
 
@@ -9,6 +11,8 @@ public sealed record AppResponse(int Id, string Name, DateTimeOffset CreatedAt)
 {
     public static AppResponse From(App app) => new(app.Id, app.Name, app.CreatedAt);
 }
+
+public sealed record AppDetailResponse(int Id, string Name, DateTimeOffset CreatedAt, EnvironmentResponse[] Environments);
 
 public sealed record CreateAppRequest(string? Name);
 
@@ -20,7 +24,8 @@ public static class AppEndpoints
 
         apps.MapGet("/", ListApps);
         apps.MapGet("/{id:int}", GetApp).WithName(nameof(GetApp));
-        apps.MapPost("/", CreateApp);
+        apps.MapPost("/", CreateApp).RequireAuthorization(Policies.ManageApps);
+        apps.MapEnvironmentEndpoints();
 
         return apps;
     }
@@ -36,12 +41,26 @@ public static class AppEndpoints
         return TypedResults.Ok(apps);
     }
 
-    private static async Task<Results<Ok<AppResponse>, NotFound>> GetApp(
+    private static async Task<Results<Ok<AppDetailResponse>, NotFound>> GetApp(
         int id, ShiplogDbContext db, CancellationToken ct)
     {
-        var app = await db.Apps.AsNoTracking().FirstOrDefaultAsync(a => a.Id == id, ct);
+        var app = await db.Apps
+            .AsNoTracking()
+            .Include(a => a.Environments)
+            .FirstOrDefaultAsync(a => a.Id == id, ct);
 
-        return app is null ? TypedResults.NotFound() : TypedResults.Ok(AppResponse.From(app));
+        if (app is null)
+        {
+            return TypedResults.NotFound();
+        }
+
+        var environments = app.Environments
+            .OrderBy(e => e.IsProduction)
+            .ThenBy(e => e.Name, StringComparer.OrdinalIgnoreCase)
+            .Select(EnvironmentResponse.From)
+            .ToArray();
+
+        return TypedResults.Ok(new AppDetailResponse(app.Id, app.Name, app.CreatedAt, environments));
     }
 
     private static async Task<Results<CreatedAtRoute<AppResponse>, ValidationProblem, Conflict<ProblemDetails>>> CreateApp(
@@ -61,11 +80,7 @@ public static class AppEndpoints
         // case into a clear 409 instead of a database exception.
         if (await db.Apps.AnyAsync(a => a.Name == name, ct))
         {
-            return TypedResults.Conflict(new ProblemDetails
-            {
-                Title = "An app with that name already exists.",
-                Status = StatusCodes.Status409Conflict,
-            });
+            return TypedResults.Conflict(Problems.Conflict("An app with that name already exists."));
         }
 
         var app = new App { Name = name, CreatedAt = clock.GetUtcNow() };

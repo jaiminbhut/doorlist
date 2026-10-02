@@ -8,7 +8,7 @@
 
 FROM mcr.microsoft.com/dotnet/sdk:10.0 AS build
 WORKDIR /src
-COPY global.json Directory.Build.props dotnet-tools.json ./
+COPY global.json Directory.Build.props dotnet-tools.json .editorconfig ./
 COPY src/Shiplog.Api/Shiplog.Api.csproj src/Shiplog.Api/
 RUN dotnet restore src/Shiplog.Api/Shiplog.Api.csproj && dotnet tool restore
 COPY src/ src/

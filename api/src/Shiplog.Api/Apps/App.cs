@@ -1,8 +1,10 @@
+using Shiplog.Api.Environments;
+
 namespace Shiplog.Api.Apps;
 
 /// <summary>
 /// An application a team ships: a mobile app, a web front end, or a service.
-/// Releases will hang off it from milestone 2 on.
+/// It has the environments it deploys to, and releases go to one of them.
 /// </summary>
 public sealed class App
 {
@@ -13,4 +15,6 @@ public sealed class App
     public required string Name { get; set; }
 
     public DateTimeOffset CreatedAt { get; set; }
+
+    public ICollection<AppEnvironment> Environments { get; } = new List<AppEnvironment>();
 }

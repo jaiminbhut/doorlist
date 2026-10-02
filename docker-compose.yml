@@ -1,9 +1,12 @@
 # Local stack: SQL Server, a one-shot migration step, the API, and the Angular
 # app behind nginx. `docker compose up --build`, then open http://localhost:8080.
 #
-# The SA password below is a local-development default only. Override it with
-# MSSQL_SA_PASSWORD in a .env file; deployed environments use their own
-# secrets and a non-SA login (milestone 3).
+# Every secret below has a local-development default only. Override them in a
+# .env file (see .env.example); deployed environments use their own secrets
+# and a non-SA database login (milestone 3).
+#
+# Demo users (password: SHIPLOG_DEMO_PASSWORD, default Shiplog-demo-2026):
+#   lead@example.com, developer@example.com, viewer@example.com
 
 name: shiplog
 
@@ -39,16 +42,32 @@ services:
       db:
         condition: service_healthy
 
+  seed:
+    # The API image, run once with a command: creates the roles and demo users.
+    image: shiplog-api:local
+    build:
+      context: ./api
+      target: api
+    command: ["seed-demo-users"]
+    environment:
+      ConnectionStrings__Shiplog: *db-connection
+      Demo__Password: ${SHIPLOG_DEMO_PASSWORD:-Shiplog-demo-2026}
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+
   api:
+    image: shiplog-api:local
     build:
       context: ./api
       target: api
     environment:
       ConnectionStrings__Shiplog: *db-connection
+      Auth__Jwt__SigningKey: ${SHIPLOG_JWT_SIGNING_KEY:-local-development-signing-key-not-for-production}
     ports:
       - "5080:8080"
     depends_on:
-      migrate:
+      seed:
         condition: service_completed_successfully
 
   web:

@@ -8,6 +8,9 @@
   --accent: #2f5bd3;
   --accent-text: #ffffff;
   --danger: #b42318;
+  --success: #1f7a4d;
+  --warning-bg: #fdf3e1;
+  --warning-text: #8a4b08;
 }
 
 @media (prefers-color-scheme: dark) {
@@ -20,6 +23,9 @@
     --accent: #7a9cf5;
     --accent-text: #0e1630;
     --danger: #f97066;
+    --success: #5fd39b;
+    --warning-bg: #3a2a10;
+    --warning-text: #f5c27a;
   }
 }
 
@@ -37,4 +43,180 @@ body {
     'Segoe UI',
     sans-serif;
   line-height: 1.5;
+}
+
+a {
+  color: var(--accent);
+}
+
+h2 {
+  margin: 0 0 4px;
+  font-size: 1.25rem;
+}
+
+h3 {
+  margin: 24px 0 8px;
+  font-size: 1rem;
+}
+
+.panel {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 24px;
+  margin-bottom: 24px;
+}
+
+.panel > header p {
+  margin: 0 0 20px;
+}
+
+.muted {
+  color: var(--muted);
+  font-size: 0.875rem;
+}
+
+.error {
+  color: var(--danger);
+  font-size: 0.875rem;
+  margin: 8px 0 0;
+}
+
+.notice {
+  background: var(--warning-bg);
+  color: var(--warning-text);
+  border-radius: 8px;
+  padding: 10px 12px;
+  font-size: 0.875rem;
+  margin: 12px 0 0;
+}
+
+/* Forms */
+.field {
+  display: grid;
+  gap: 6px;
+  margin-bottom: 14px;
+}
+
+.field label,
+.field-label {
+  font-size: 0.875rem;
+  font-weight: 600;
+}
+
+.row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+}
+
+.grid-2 {
+  display: grid;
+  gap: 0 12px;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+}
+
+input[type='text'],
+input[type='email'],
+input[type='password'],
+input[type='url'],
+select,
+textarea {
+  width: 100%;
+  min-width: 0;
+  padding: 10px 12px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--bg);
+  color: var(--text);
+  font: inherit;
+}
+
+.row input {
+  flex: 1;
+  width: auto;
+}
+
+textarea {
+  min-height: 80px;
+  resize: vertical;
+}
+
+.checkbox {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  font-size: 0.875rem;
+}
+
+button {
+  padding: 10px 16px;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+button.primary {
+  background: var(--accent);
+  color: var(--accent-text);
+}
+
+button.secondary {
+  background: transparent;
+  border-color: var(--border);
+  color: var(--text);
+}
+
+button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Lists */
+.list {
+  list-style: none;
+  margin: 16px 0 0;
+  padding: 0;
+  border-top: 1px solid var(--border);
+}
+
+.list > li {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: center;
+  gap: 4px 16px;
+  padding: 12px 0;
+  border-bottom: 1px solid var(--border);
+}
+
+.list .empty {
+  justify-content: center;
+}
+
+.strong {
+  font-weight: 600;
+}
+
+.badge {
+  display: inline-block;
+  padding: 1px 8px;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  font-size: 0.75rem;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.badge.production {
+  border-color: var(--danger);
+  color: var(--danger);
+}
+
+.badge.shipped {
+  border-color: var(--success);
+  color: var(--success);
 }

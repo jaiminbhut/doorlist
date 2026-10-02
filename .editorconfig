@@ -19,7 +19,3 @@ csharp_prefer_braces = true:warning
 
 [*.md]
 trim_trailing_whitespace = false
-
-# EF Core writes these; style rules don't apply to generated migrations.
-[api/src/**/Migrations/*.cs]
-generated_code = true

@@ -13,16 +13,20 @@
 Prerequisites: .NET 10 SDK, Node 24, and Docker with Compose.
 
 ```sh
-docker compose up --build      # SQL Server, migrations, API, web
+docker compose up --build      # SQL Server, migrations, demo users, API, web
 open http://localhost:8080      # web; the API is also on http://localhost:5080
 ```
 
-To run the API from your IDE instead, start only the database and run the migrations, then `dotnet run`:
+Sign in as `lead@example.com`, `developer@example.com` or `viewer@example.com`, password `Shiplog-demo-2026`.
+
+To run the API from your IDE instead, start the database and the one-shot steps, then `dotnet run`:
 
 ```sh
-docker compose up -d db migrate
+docker compose up -d db migrate seed
 cd api && dotnet run --project src/Shiplog.Api
 ```
+
+The Development settings hold a local JWT signing key and demo password; other environments must set `Auth__Jwt__SigningKey` and `Demo__Password` as secrets.
 
 ### Apple Silicon
 

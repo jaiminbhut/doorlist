@@ -1,7 +1,18 @@
 <header class="site-header">
-  <div class="container">
-    <h1>Shiplog</h1>
-    <p>Releases, checked before they ship.</p>
+  <div class="container header-row">
+    <div>
+      <h1>Shiplog</h1>
+      <p>Releases, checked before they ship.</p>
+    </div>
+
+    @if (auth.user(); as user) {
+      <nav aria-label="Main">
+        <a routerLink="/releases" routerLinkActive="active">Releases</a>
+        <a routerLink="/apps" routerLinkActive="active">Apps</a>
+        <span class="muted">{{ user.displayName }} · {{ user.roles.join(', ') }}</span>
+        <button class="secondary" type="button" (click)="signOut()">Sign out</button>
+      </nav>
+    }
   </div>
 </header>
 
