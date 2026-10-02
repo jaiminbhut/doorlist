@@ -1,0 +1,43 @@
+<section class="panel" aria-labelledby="apps-heading">
+  <header class="panel-header">
+    <h2 id="apps-heading">Apps</h2>
+    <p class="muted">Everything this team ships. Releases attach to an app.</p>
+  </header>
+
+  <form class="add-form" [formGroup]="form" (ngSubmit)="add()">
+    <label for="app-name">New app</label>
+    <div class="add-row">
+      <input
+        id="app-name"
+        type="text"
+        autocomplete="off"
+        placeholder="e.g. Field App (Android)"
+        [maxlength]="maxLength"
+        formControlName="name"
+      />
+      <button type="submit" [disabled]="form.invalid || saving()">
+        {{ saving() ? 'Adding…' : 'Add app' }}
+      </button>
+    </div>
+    @if (saveError(); as message) {
+      <p class="error" role="alert">{{ message }}</p>
+    }
+  </form>
+
+  @if (loading()) {
+    <p class="muted">Loading apps…</p>
+  } @else if (loadError(); as message) {
+    <p class="error" role="alert">{{ message }}</p>
+  } @else {
+    <ul class="app-list">
+      @for (app of apps(); track app.id) {
+        <li>
+          <span class="app-name">{{ app.name }}</span>
+          <span class="muted">Added {{ app.createdAt | date: 'mediumDate' }}</span>
+        </li>
+      } @empty {
+        <li class="muted empty">No apps yet. Add the first one above.</li>
+      }
+    </ul>
+  }
+</section>
