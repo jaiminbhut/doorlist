@@ -44,6 +44,8 @@ A breaking change is split into steps, and each step passes the check against th
 
 Steps 2 and 3 can't be merged. While step 3's migration runs, the step 2 API must still be able to read the table, so the step 2 API must not map the column being dropped.
 
+The same reasoning moves work earlier. If step 2 will stop writing a NOT NULL column, step 1 must already make it nullable, and step 1's code must already tolerate NULL in it. Otherwise the step 1 API breaks on rows the step 2 API writes, whether the two run side by side or step 2 is rolled back.
+
 Each step is its own pull request and its own release.
 
 ## Worked example: splitting `Release.Version`
@@ -56,16 +58,20 @@ Migration `SplitReleaseVersionExpand`:
 
 - Adds `VersionName` (nullable `nvarchar(50)`) and `BuildNumber` (nullable `int`).
 - Backfills them from `Version` with hand-written SQL. EF generates only the two `AddColumn` calls.
-- Leaves `Version` in place. The unique index on it doesn't change.
+- Makes `Version` nullable. Nothing writes NULL yet, so the previous API is unaffected. The point is that step 2 can stop writing it while *this* version may still be running, or be rolled back to.
+- Recreates the unique index on `Version` with a `WHERE [Version] IS NOT NULL` filter. SQL Server allows only one NULL in a plain unique index.
+- `Down()` is hand-edited too. It rebuilds `Version` from the split fields before dropping them, so rolling back loses nothing.
 
 Code:
 
 - **Writes:** all three columns. `Version` keeps the display form, so the previous API version still reads and de-duplicates correctly.
-- **Reads:** `VersionName` and `BuildNumber`, falling back to parsing `Version` for rows the previous version writes during the deploy.
+- **Reads:** `VersionName` and `BuildNumber`, falling back to parsing `Version` for rows the previous version writes during the deploy. A row with no `Version` is fine too.
+- **Duplicates:** a new release is checked against both shapes.
 - **API:** create requests take `versionName` and `buildNumber`. The old `version` string is still accepted from older clients. Responses add the two fields and keep `version` as the display form.
 
 How it's checked:
 
 - `ReleaseVersionTests` pins the C# parser on edge cases: `"1.0 (beta)"`, `"(7)"`, `"v2(3)"`, and integer overflow.
 - `MigrationTests` migrates a fresh database to the migration before this one, inserts rows in the old shape, applies the expand migration, and asserts the SQL backfill gives exactly what `ReleaseVersion.Parse` gives.
+- A second migration test goes the other way. It writes rows with no `Version`, rolls the migration back, and checks `Version` is rebuilt.
 - The CI compatibility check runs the previous API against the expanded schema.

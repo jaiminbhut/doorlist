@@ -28,6 +28,15 @@ public static partial class ReleaseVersion
             : (trimmed, null);
     }
 
+    /// <summary>
+    /// A row's version from whichever shape it has: the split fields, or only the
+    /// old <c>Version</c> string if the previous API version wrote it during a deploy.
+    /// </summary>
+    public static (string Name, int? BuildNumber) Resolve(string? version, string? versionName, int? buildNumber) =>
+        versionName is not null ? (versionName, buildNumber)
+        : version is not null ? Parse(version)
+        : throw new InvalidOperationException("A release has neither a version name nor a version.");
+
     [GeneratedRegex(@"^(?<name>.*\S)\s*\((?<build>[0-9]+)\)$")]
     private static partial Regex NameAndBuild();
 }

@@ -51,7 +51,13 @@ public sealed record ReleaseDetail(
     ChecklistItemResponse[] Checklist)
 {
     /// <summary>Needs <see cref="Release.App"/>, <see cref="Release.Environment"/> and the checklist loaded.</summary>
-    public static ReleaseDetail From(Release release) => new(
+    public static ReleaseDetail From(Release release)
+    {
+        var (name, build) = ReleaseVersion.Resolve(release.Version, release.VersionName, release.BuildNumber);
+        return From(release, name, build);
+    }
+
+    private static ReleaseDetail From(Release release, string versionName, int? buildNumber) => new(
         release.Id,
         release.AppId,
         release.App.Name,
@@ -59,9 +65,9 @@ public sealed record ReleaseDetail(
         release.Environment.Name,
         release.Environment.IsProduction,
         release.Environment.ApiUrl,
-        release.Version,
-        release.VersionName ?? ReleaseVersion.Parse(release.Version).Name,
-        release.VersionName is null ? ReleaseVersion.Parse(release.Version).BuildNumber : release.BuildNumber,
+        ReleaseVersion.Format(versionName, buildNumber),
+        versionName,
+        buildNumber,
         release.Platform,
         release.Notes,
         release.Status,
@@ -130,13 +136,12 @@ public static class ReleaseEndpoints
             })
             .ToArrayAsync(ct);
 
-        // Rows the previous API version wrote during a deploy have only Version.
         var releases = rows.Select(r =>
         {
-            var (name, build) = r.VersionName is null ? ReleaseVersion.Parse(r.Version) : (r.VersionName, r.BuildNumber);
+            var (name, build) = ReleaseVersion.Resolve(r.Version, r.VersionName, r.BuildNumber);
             return new ReleaseSummary(
                 r.Id, r.AppId, r.AppName, r.EnvironmentId, r.EnvironmentName, r.IsProduction,
-                r.Version, name, build, r.Platform, r.Status, r.ChecklistDone, r.ChecklistTotal, r.CreatedAt, r.ShippedAt);
+                ReleaseVersion.Format(name, build), name, build, r.Platform, r.Status, r.ChecklistDone, r.ChecklistTotal, r.CreatedAt, r.ShippedAt);
         }).ToArray();
 
         return TypedResults.Ok(releases);
@@ -200,7 +205,8 @@ public static class ReleaseEndpoints
 
         var platform = request.Platform!.Value;
         if (await db.Releases.AnyAsync(
-                r => r.AppId == request.AppId && r.EnvironmentId == request.EnvironmentId && r.Platform == platform && r.Version == version,
+                r => r.AppId == request.AppId && r.EnvironmentId == request.EnvironmentId && r.Platform == platform
+                    && ((r.VersionName == versionName && r.BuildNumber == buildNumber) || r.Version == version),
                 ct))
         {
             return TypedResults.Conflict(Problems.Conflict("This version already has a release for that platform and environment."));

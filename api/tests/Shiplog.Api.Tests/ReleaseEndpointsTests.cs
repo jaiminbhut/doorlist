@@ -198,6 +198,28 @@ public sealed class ReleaseEndpointsTests(ShiplogApiFactory factory)
         Assert.Equal(("5.0.0", 7), (summary.VersionName, summary.BuildNumber));
     }
 
+    [Fact]
+    public async Task RowsWrittenWithoutTheOldVersionStillReadAndBlockDuplicates()
+    {
+        var (app, staging, _) = await CreateAppWithEnvironmentsAsync();
+        var developer = await factory.CreateClientAsAsync(Roles.Developer);
+        var request = new CreateReleaseRequest(app.Id, staging.Id, Platform.Ios, "6.0.0", 3, null);
+        var release = await ReadAsync<ReleaseDetail>(await developer.PostAsJsonAsync("/api/releases", request, Json));
+
+        // What the next step (which stops writing Version) leaves behind.
+        using (var scope = factory.Services.CreateScope())
+        {
+            var db = scope.ServiceProvider.GetRequiredService<ShiplogDbContext>();
+            await db.Database.ExecuteSqlAsync($"UPDATE Releases SET Version = NULL WHERE Id = {release.Id}");
+        }
+
+        var detail = await developer.GetFromJsonAsync<ReleaseDetail>($"/api/releases/{release.Id}", Json);
+        var duplicate = await developer.PostAsJsonAsync("/api/releases", request, Json);
+
+        Assert.Equal("6.0.0 (3)", detail!.Version);
+        Assert.Equal(HttpStatusCode.Conflict, duplicate.StatusCode);
+    }
+
     private async Task<(AppResponse App, EnvironmentResponse Staging, EnvironmentResponse Production)> CreateAppWithEnvironmentsAsync()
     {
         var lead = await factory.CreateClientAsAsync(Roles.Lead);

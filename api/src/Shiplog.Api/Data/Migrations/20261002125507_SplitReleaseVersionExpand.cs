@@ -10,6 +10,20 @@ namespace Shiplog.Api.Data.Migrations
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
         {
+            migrationBuilder.DropIndex(
+                name: "IX_Releases_AppId_EnvironmentId_Platform_Version",
+                table: "Releases");
+
+            migrationBuilder.AlterColumn<string>(
+                name: "Version",
+                table: "Releases",
+                type: "nvarchar(50)",
+                maxLength: 50,
+                nullable: true,
+                oldClrType: typeof(string),
+                oldType: "nvarchar(50)",
+                oldMaxLength: 50);
+
             migrationBuilder.AddColumn<int>(
                 name: "BuildNumber",
                 table: "Releases",
@@ -29,6 +43,13 @@ namespace Shiplog.Api.Data.Migrations
             // build. Must agree with ReleaseVersion.Parse. Self-contained on
             // purpose: a migration must not change if application code does.
             migrationBuilder.Sql(BackfillSql);
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Releases_AppId_EnvironmentId_Platform_Version",
+                table: "Releases",
+                columns: new[] { "AppId", "EnvironmentId", "Platform", "Version" },
+                unique: true,
+                filter: "[Version] IS NOT NULL");
         }
 
         internal const string BackfillSql = """
@@ -60,6 +81,19 @@ namespace Shiplog.Api.Data.Migrations
         /// <inheritdoc />
         protected override void Down(MigrationBuilder migrationBuilder)
         {
+            migrationBuilder.DropIndex(
+                name: "IX_Releases_AppId_EnvironmentId_Platform_Version",
+                table: "Releases");
+
+            // Hand-written: rows written after the next step stop writing
+            // Version would otherwise lose their version when the split
+            // columns are dropped below.
+            migrationBuilder.Sql("""
+                UPDATE [Releases]
+                SET [Version] = [VersionName] + CASE WHEN [BuildNumber] IS NULL THEN N'' ELSE N' (' + CAST([BuildNumber] AS nvarchar(11)) + N')' END
+                WHERE [Version] IS NULL;
+                """);
+
             migrationBuilder.DropColumn(
                 name: "BuildNumber",
                 table: "Releases");
@@ -67,6 +101,24 @@ namespace Shiplog.Api.Data.Migrations
             migrationBuilder.DropColumn(
                 name: "VersionName",
                 table: "Releases");
+
+            migrationBuilder.AlterColumn<string>(
+                name: "Version",
+                table: "Releases",
+                type: "nvarchar(50)",
+                maxLength: 50,
+                nullable: false,
+                defaultValue: "",
+                oldClrType: typeof(string),
+                oldType: "nvarchar(50)",
+                oldMaxLength: 50,
+                oldNullable: true);
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Releases_AppId_EnvironmentId_Platform_Version",
+                table: "Releases",
+                columns: new[] { "AppId", "EnvironmentId", "Platform", "Version" },
+                unique: true);
         }
     }
 }

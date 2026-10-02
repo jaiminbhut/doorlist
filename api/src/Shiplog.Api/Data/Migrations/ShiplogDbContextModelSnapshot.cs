@@ -365,7 +365,6 @@ namespace Shiplog.Api.Data.Migrations
                         .HasColumnType("nvarchar(20)");
 
                     b.Property<string>("Version")
-                        .IsRequired()
                         .HasMaxLength(50)
                         .HasColumnType("nvarchar(50)");
 
@@ -378,7 +377,8 @@ namespace Shiplog.Api.Data.Migrations
                     b.HasIndex("EnvironmentId");
 
                     b.HasIndex("AppId", "EnvironmentId", "Platform", "Version")
-                        .IsUnique();
+                        .IsUnique()
+                        .HasFilter("[Version] IS NOT NULL");
 
                     b.ToTable("Releases");
                 });

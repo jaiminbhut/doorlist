@@ -51,6 +51,27 @@ public sealed class MigrationTests(ShiplogApiFactory factory)
         await db.Database.EnsureDeletedAsync();
     }
 
+    [Fact]
+    public async Task RollingBackTheExpandStepRestoresVersionFromTheSplitFields()
+    {
+        await using var db = CreateFreshDatabase();
+        await db.GetService<IMigrator>().MigrateAsync();
+
+        await db.Database.ExecuteSqlRawAsync("""
+            INSERT INTO Apps (Name, CreatedAt) VALUES (N'Field App', SYSDATETIMEOFFSET());
+            INSERT INTO Environments (AppId, Name, ApiUrl, IsProduction) VALUES (1, N'staging', N'https://staging.example.com/', 0);
+            INSERT INTO Releases (AppId, EnvironmentId, Version, VersionName, BuildNumber, Platform, Status, CreatedAt, CreatedBy) VALUES
+                (1, 1, NULL, N'2.4.0', 118, N'Android', N'InProgress', SYSDATETIMEOFFSET(), N'developer@example.com'),
+                (1, 1, NULL, N'3.0.0', NULL, N'Android', N'InProgress', SYSDATETIMEOFFSET(), N'developer@example.com');
+            """);
+
+        await db.GetService<IMigrator>().MigrateAsync(BeforeVersionSplit);
+
+        var versions = await db.Database.SqlQuery<string>($"SELECT Version AS Value FROM Releases ORDER BY Id").ToListAsync();
+        Assert.Equal(["2.4.0 (118)", "3.0.0"], versions);
+        await db.Database.EnsureDeletedAsync();
+    }
+
     private ShiplogDbContext CreateFreshDatabase()
     {
         var connection = new SqlConnectionStringBuilder(factory.ConnectionString)
