@@ -4,7 +4,7 @@ A release tracker for teams that ship mobile and web apps. It keeps track of eac
 
 Shiplog is also a public reference project. Alongside the features, it shows how the whole product is built and run: an Angular front end, an ASP.NET Core API on SQL Server, EF Core migrations that run as their own deploy step, Docker, CI on every pull request, and the decisions behind each of these, written down.
 
-> **Status:** milestone 2 of 5 (domain and auth). See the [roadmap](#roadmap).
+> **Status:** milestones 1, 2 and 4 are done; milestone 3 (deploy) is next. See the [roadmap](#roadmap).
 
 ## What it does
 
@@ -21,7 +21,7 @@ Shiplog is also a public reference project. Alongside the features, it shows how
 | API | ASP.NET Core on .NET 10, minimal APIs, ProblemDetails, health checks |
 | Data | SQL Server, EF Core code-first migrations ([ADR 2](docs/adr/0002-sql-server-with-ef-core-code-first.md)) |
 | Auth | ASP.NET Core Identity, short-lived JWTs, role policies ([ADR 4](docs/adr/0004-authentication-with-identity-and-jwt.md)) |
-| Migrations | EF Core migration bundle, run as a separate step before the API starts ([ADR 3](docs/adr/0003-run-migrations-as-a-separate-step.md)) |
+| Migrations | EF Core migration bundle, run as a separate step before the API starts ([ADR 3](docs/adr/0003-run-migrations-as-a-separate-step.md)); every PR checked against the running API version, breaking changes in expand/contract steps ([docs/migrations.md](docs/migrations.md)) |
 | Tests | xUnit integration tests against a real SQL Server (Testcontainers) |
 | Delivery | Docker multi-stage images, docker compose, GitHub Actions |
 
@@ -77,7 +77,7 @@ docker-compose.yml       Local stack
 | 1. Skeleton ✅ | `docker compose up` runs end to end; CI on every pull request |
 | 2. Domain and auth ✅ | Apps, environments, releases, checklists; ASP.NET Core Identity + JWT with roles; Angular release board |
 | 3. Deploy pipeline | Images to GHCR; release workflow with env verification, DB backup, migration bundle, API rollout and health check; staging and production; Content-Security-Policy |
-| 4. Expand/contract | A CI check that the running API survives each PR's migrations; a breaking schema change (splitting `Version`) shipped in three steps that each pass it, documented in [`docs/migrations.md`](docs/migrations.md) |
+| 4. Expand/contract ✅ | A CI check that the running API survives each PR's migrations; a breaking schema change (splitting `Version`) shipped in three steps that each pass it, documented in [`docs/migrations.md`](docs/migrations.md) |
 | 5. Polish | Demo account, screenshots, `v1.0.0` |
 
 ## Contributing
