@@ -16,6 +16,8 @@ namespace Shiplog.Api.Tests;
 public sealed class MigrationTests(ShiplogApiFactory factory)
 {
     private const string BeforeVersionSplit = "20261002121352_AddIdentityEnvironmentsAndReleases";
+    private const string Expand = "20261002125507_SplitReleaseVersionExpand";
+    private const string Switch = "20261002125953_SplitReleaseVersionSwitch";
 
     public static TheoryData<string> OldVersions { get; } =
     [
@@ -40,14 +42,14 @@ public sealed class MigrationTests(ShiplogApiFactory factory)
                 """);
         }
 
-        await db.GetService<IMigrator>().MigrateAsync();
+        await db.GetService<IMigrator>().MigrateAsync(Expand);
 
         var rows = await db.Database
             .SqlQuery<VersionRow>($"SELECT Version, VersionName, BuildNumber FROM Releases")
             .ToListAsync();
 
         Assert.Equal(OldVersions.Count, rows.Count);
-        Assert.All(rows, row => Assert.Equal(ReleaseVersion.Parse(row.Version), (row.VersionName!, row.BuildNumber)));
+        Assert.All(rows, row => Assert.Equal(ReleaseVersion.Parse(row.Version!), (row.VersionName!, row.BuildNumber)));
         await db.Database.EnsureDeletedAsync();
     }
 
@@ -72,6 +74,29 @@ public sealed class MigrationTests(ShiplogApiFactory factory)
         await db.Database.EnsureDeletedAsync();
     }
 
+    [Fact]
+    public async Task SwitchSplitsRowsThePreSplitApiWroteWhileTheExpandStepRolledOut()
+    {
+        await using var db = CreateFreshDatabase();
+        await db.GetService<IMigrator>().MigrateAsync(Expand);
+
+        // The pre-split API knows only Version, so it leaves the new columns NULL.
+        await db.Database.ExecuteSqlRawAsync("""
+            INSERT INTO Apps (Name, CreatedAt) VALUES (N'Field App', SYSDATETIMEOFFSET());
+            INSERT INTO Environments (AppId, Name, ApiUrl, IsProduction) VALUES (1, N'staging', N'https://staging.example.com/', 0);
+            INSERT INTO Releases (AppId, EnvironmentId, Version, Platform, Status, CreatedAt, CreatedBy)
+            VALUES (1, 1, N'4.0.0 (9)', N'Android', N'InProgress', SYSDATETIMEOFFSET(), N'developer@example.com');
+            """);
+
+        await db.GetService<IMigrator>().MigrateAsync(Switch);
+
+        var row = await db.Database
+            .SqlQuery<VersionRow>($"SELECT Version, VersionName, BuildNumber FROM Releases")
+            .SingleAsync();
+        Assert.Equal(("4.0.0 (9)", "4.0.0", 9), (row.Version, row.VersionName, row.BuildNumber));
+        await db.Database.EnsureDeletedAsync();
+    }
+
     private ShiplogDbContext CreateFreshDatabase()
     {
         var connection = new SqlConnectionStringBuilder(factory.ConnectionString)
@@ -86,7 +111,7 @@ public sealed class MigrationTests(ShiplogApiFactory factory)
 
     private sealed class VersionRow
     {
-        public required string Version { get; init; }
+        public string? Version { get; init; }
 
         public string? VersionName { get; init; }
 

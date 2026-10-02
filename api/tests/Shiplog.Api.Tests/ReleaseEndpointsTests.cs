@@ -153,19 +153,6 @@ public sealed class ReleaseEndpointsTests(ShiplogApiFactory factory)
     }
 
     [Fact]
-    public async Task OlderClientsCanStillSendTheSingleVersionString()
-    {
-        var (app, staging, _) = await CreateAppWithEnvironmentsAsync();
-        var developer = await factory.CreateClientAsAsync(Roles.Developer);
-
-        var response = await developer.PostAsJsonAsync(
-            "/api/releases", new CreateReleaseRequest(app.Id, staging.Id, Platform.Web, null, null, null, Version: "3.1.0 (42)"), Json);
-
-        var release = await ReadAsync<ReleaseDetail>(response);
-        Assert.Equal(("3.1.0 (42)", "3.1.0", 42), (release.Version, release.VersionName, release.BuildNumber));
-    }
-
-    [Fact]
     public async Task NegativeBuildNumberIsAValidationProblem()
     {
         var (app, staging, _) = await CreateAppWithEnvironmentsAsync();
@@ -178,46 +165,29 @@ public sealed class ReleaseEndpointsTests(ShiplogApiFactory factory)
     }
 
     [Fact]
-    public async Task RowsWrittenOnlyInTheOldShapeStillReadAsSplitVersions()
-    {
-        var developer = await factory.CreateClientAsAsync(Roles.Developer);
-        var release = await CreateStagingReleaseAsync(developer, "5.0.0", 7);
-
-        // What the previous API version writes during a deploy: Version only.
-        using (var scope = factory.Services.CreateScope())
-        {
-            var db = scope.ServiceProvider.GetRequiredService<ShiplogDbContext>();
-            await db.Database.ExecuteSqlAsync(
-                $"UPDATE Releases SET VersionName = NULL, BuildNumber = NULL WHERE Id = {release.Id}");
-        }
-
-        var detail = await developer.GetFromJsonAsync<ReleaseDetail>($"/api/releases/{release.Id}", Json);
-        var summary = (await developer.GetFromJsonAsync<ReleaseSummary[]>($"/api/releases?appId={release.AppId}", Json))!.Single();
-
-        Assert.Equal(("5.0.0 (7)", "5.0.0", 7), (detail!.Version, detail.VersionName, detail.BuildNumber));
-        Assert.Equal(("5.0.0", 7), (summary.VersionName, summary.BuildNumber));
-    }
-
-    [Fact]
-    public async Task RowsWrittenWithoutTheOldVersionStillReadAndBlockDuplicates()
+    public async Task TheOldVersionColumnIsNoLongerWrittenAndDuplicatesUseTheSplitFields()
     {
         var (app, staging, _) = await CreateAppWithEnvironmentsAsync();
         var developer = await factory.CreateClientAsAsync(Roles.Developer);
         var request = new CreateReleaseRequest(app.Id, staging.Id, Platform.Ios, "6.0.0", 3, null);
         var release = await ReadAsync<ReleaseDetail>(await developer.PostAsJsonAsync("/api/releases", request, Json));
 
-        // What the next step (which stops writing Version) leaves behind.
+        string? stored;
         using (var scope = factory.Services.CreateScope())
         {
             var db = scope.ServiceProvider.GetRequiredService<ShiplogDbContext>();
-            await db.Database.ExecuteSqlAsync($"UPDATE Releases SET Version = NULL WHERE Id = {release.Id}");
+            stored = await db.Database
+                .SqlQuery<string?>($"SELECT Version AS Value FROM Releases WHERE Id = {release.Id}")
+                .SingleAsync();
         }
 
-        var detail = await developer.GetFromJsonAsync<ReleaseDetail>($"/api/releases/{release.Id}", Json);
         var duplicate = await developer.PostAsJsonAsync("/api/releases", request, Json);
+        var sameNameOtherBuild = await developer.PostAsJsonAsync("/api/releases", request with { BuildNumber = 4 }, Json);
 
-        Assert.Equal("6.0.0 (3)", detail!.Version);
+        Assert.Null(stored);
+        Assert.Equal("6.0.0 (3)", release.Version);
         Assert.Equal(HttpStatusCode.Conflict, duplicate.StatusCode);
+        Assert.Equal(HttpStatusCode.Created, sameNameOtherBuild.StatusCode);
     }
 
     private async Task<(AppResponse App, EnvironmentResponse Staging, EnvironmentResponse Production)> CreateAppWithEnvironmentsAsync()

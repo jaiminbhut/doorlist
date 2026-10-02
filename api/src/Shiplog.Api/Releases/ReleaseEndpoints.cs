@@ -51,13 +51,7 @@ public sealed record ReleaseDetail(
     ChecklistItemResponse[] Checklist)
 {
     /// <summary>Needs <see cref="Release.App"/>, <see cref="Release.Environment"/> and the checklist loaded.</summary>
-    public static ReleaseDetail From(Release release)
-    {
-        var (name, build) = ReleaseVersion.Resolve(release.Version, release.VersionName, release.BuildNumber);
-        return From(release, name, build);
-    }
-
-    private static ReleaseDetail From(Release release, string versionName, int? buildNumber) => new(
+    public static ReleaseDetail From(Release release) => new(
         release.Id,
         release.AppId,
         release.App.Name,
@@ -65,9 +59,9 @@ public sealed record ReleaseDetail(
         release.Environment.Name,
         release.Environment.IsProduction,
         release.Environment.ApiUrl,
-        ReleaseVersion.Format(versionName, buildNumber),
-        versionName,
-        buildNumber,
+        ReleaseVersion.Format(release.VersionName, release.BuildNumber),
+        release.VersionName,
+        release.BuildNumber,
         release.Platform,
         release.Notes,
         release.Status,
@@ -78,15 +72,13 @@ public sealed record ReleaseDetail(
         [.. release.Checklist.OrderBy(i => i.Position).Select(ChecklistItemResponse.From)]);
 }
 
-/// <param name="Version">Deprecated: the old single-string form, still accepted from older clients.</param>
 public sealed record CreateReleaseRequest(
     int AppId,
     int EnvironmentId,
     Platform? Platform,
     string? VersionName,
     int? BuildNumber,
-    string? Notes,
-    string? Version = null);
+    string? Notes);
 
 public sealed record UpdateChecklistItemRequest(bool IsDone);
 
@@ -124,7 +116,6 @@ public static class ReleaseEndpoints
                 r.EnvironmentId,
                 EnvironmentName = r.Environment.Name,
                 r.Environment.IsProduction,
-                r.Version,
                 r.VersionName,
                 r.BuildNumber,
                 r.Platform,
@@ -136,13 +127,10 @@ public static class ReleaseEndpoints
             })
             .ToArrayAsync(ct);
 
-        var releases = rows.Select(r =>
-        {
-            var (name, build) = ReleaseVersion.Resolve(r.Version, r.VersionName, r.BuildNumber);
-            return new ReleaseSummary(
-                r.Id, r.AppId, r.AppName, r.EnvironmentId, r.EnvironmentName, r.IsProduction,
-                ReleaseVersion.Format(name, build), name, build, r.Platform, r.Status, r.ChecklistDone, r.ChecklistTotal, r.CreatedAt, r.ShippedAt);
-        }).ToArray();
+        var releases = rows.Select(r => new ReleaseSummary(
+            r.Id, r.AppId, r.AppName, r.EnvironmentId, r.EnvironmentName, r.IsProduction,
+            ReleaseVersion.Format(r.VersionName, r.BuildNumber), r.VersionName, r.BuildNumber,
+            r.Platform, r.Status, r.ChecklistDone, r.ChecklistTotal, r.CreatedAt, r.ShippedAt)).ToArray();
 
         return TypedResults.Ok(releases);
     }
@@ -157,9 +145,8 @@ public static class ReleaseEndpoints
     private static async Task<Results<CreatedAtRoute<ReleaseDetail>, ValidationProblem, Conflict<ProblemDetails>>> CreateRelease(
         CreateReleaseRequest request, ShiplogDbContext db, ClaimsPrincipal user, TimeProvider clock, CancellationToken ct)
     {
-        var (versionName, buildNumber) = string.IsNullOrWhiteSpace(request.VersionName) && !string.IsNullOrWhiteSpace(request.Version)
-            ? ReleaseVersion.Parse(request.Version)
-            : (request.VersionName?.Trim() ?? "", request.BuildNumber);
+        var versionName = request.VersionName?.Trim() ?? "";
+        var buildNumber = request.BuildNumber;
         var notes = string.IsNullOrWhiteSpace(request.Notes) ? null : request.Notes.Trim();
         var errors = new Dictionary<string, string[]>();
 
@@ -173,11 +160,6 @@ public static class ReleaseEndpoints
             errors["buildNumber"] = ["Build number can't be negative."];
         }
 
-        var version = ReleaseVersion.Format(versionName, buildNumber);
-        if (version.Length > Release.VersionMaxLength)
-        {
-            errors["versionName"] = [$"Version and build number together must be at most {Release.VersionMaxLength} characters."];
-        }
 
         if (request.Platform is null)
         {
@@ -206,7 +188,7 @@ public static class ReleaseEndpoints
         var platform = request.Platform!.Value;
         if (await db.Releases.AnyAsync(
                 r => r.AppId == request.AppId && r.EnvironmentId == request.EnvironmentId && r.Platform == platform
-                    && ((r.VersionName == versionName && r.BuildNumber == buildNumber) || r.Version == version),
+                    && r.VersionName == versionName && r.BuildNumber == buildNumber,
                 ct))
         {
             return TypedResults.Conflict(Problems.Conflict("This version already has a release for that platform and environment."));
@@ -216,8 +198,6 @@ public static class ReleaseEndpoints
         {
             App = environment!.App,
             Environment = environment,
-            // Dual write: the previous API version still reads Version.
-            Version = version,
             VersionName = versionName,
             BuildNumber = buildNumber,
             Platform = platform,

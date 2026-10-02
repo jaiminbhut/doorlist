@@ -75,3 +75,22 @@ How it's checked:
 - `MigrationTests` migrates a fresh database to the migration before this one, inserts rows in the old shape, applies the expand migration, and asserts the SQL backfill gives exactly what `ReleaseVersion.Parse` gives.
 - A second migration test goes the other way. It writes rows with no `Version`, rolls the migration back, and checks `Version` is rebuilt.
 - The CI compatibility check runs the previous API against the expanded schema.
+
+### Step 2: switch
+
+The code stops mapping `Version`. EF's model no longer has the column at all, so EF reads, writes and selects only `VersionName` and `BuildNumber`. Create requests no longer accept the old `version` string. Every client the step 1 API served already sends the split fields.
+
+Migration `SplitReleaseVersionSwitch`, hand-edited where EF's output would break the step 1 API:
+
+- **Backfills first.** Rows the pre-split API wrote while step 1 was rolling out have only `Version`. The same split SQL runs again, copied in, so the migration stays self-contained.
+- **`VersionName` becomes NOT NULL.** EF's generated `defaultValue: ""` is removed, so a row the backfill missed fails loudly instead of being silently blanked.
+- **The unique index moves** from `Version` to `(VersionName, BuildNumber)`, with no filter. A release without a build number is still unique per version name.
+- **`Version` is kept.** EF generated `DropColumn("Version")` because the model no longer maps it. That line is replaced with a comment: the step 1 API may still be running, and it writes that column. It's already nullable, so new rows simply leave it NULL.
+- **`Down()`** removes EF's `AddColumn("Version")`, since the column was never dropped, and rebuilds `Version` for rows this step wrote without it.
+
+How it's checked:
+
+- A migration test writes a row the way the pre-split API did (only `Version`), applies the switch migration, and asserts the split.
+- An endpoint test asserts the column is no longer written, and that duplicates are judged on the split fields.
+- The rollback test now goes through both steps' `Down()`.
+- The CI compatibility check runs the step 1 API on the switched schema.
