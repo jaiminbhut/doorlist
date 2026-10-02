@@ -1,10 +1,7 @@
 using System.Net;
 using System.Net.Http.Json;
-using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.DependencyInjection;
 using Shiplog.Api.Apps;
 using Shiplog.Api.Auth;
-using Shiplog.Api.Data;
 using Shiplog.Api.Environments;
 using Shiplog.Api.Releases;
 using static Shiplog.Api.Tests.ShiplogApiFactory;
@@ -165,29 +162,23 @@ public sealed class ReleaseEndpointsTests(ShiplogApiFactory factory)
     }
 
     [Fact]
-    public async Task TheOldVersionColumnIsNoLongerWrittenAndDuplicatesUseTheSplitFields()
+    public async Task DuplicatesAreJudgedOnVersionNameAndBuildNumber()
     {
         var (app, staging, _) = await CreateAppWithEnvironmentsAsync();
         var developer = await factory.CreateClientAsAsync(Roles.Developer);
         var request = new CreateReleaseRequest(app.Id, staging.Id, Platform.Ios, "6.0.0", 3, null);
         var release = await ReadAsync<ReleaseDetail>(await developer.PostAsJsonAsync("/api/releases", request, Json));
 
-        string? stored;
-        using (var scope = factory.Services.CreateScope())
-        {
-            var db = scope.ServiceProvider.GetRequiredService<ShiplogDbContext>();
-            stored = await db.Database
-                .SqlQuery<string?>($"SELECT Version AS Value FROM Releases WHERE Id = {release.Id}")
-                .SingleAsync();
-        }
-
         var duplicate = await developer.PostAsJsonAsync("/api/releases", request, Json);
         var sameNameOtherBuild = await developer.PostAsJsonAsync("/api/releases", request with { BuildNumber = 4 }, Json);
+        var sameNameNoBuild = await developer.PostAsJsonAsync("/api/releases", request with { BuildNumber = null }, Json);
+        var sameNameNoBuildAgain = await developer.PostAsJsonAsync("/api/releases", request with { BuildNumber = null }, Json);
 
-        Assert.Null(stored);
         Assert.Equal("6.0.0 (3)", release.Version);
         Assert.Equal(HttpStatusCode.Conflict, duplicate.StatusCode);
         Assert.Equal(HttpStatusCode.Created, sameNameOtherBuild.StatusCode);
+        Assert.Equal(HttpStatusCode.Created, sameNameNoBuild.StatusCode);
+        Assert.Equal(HttpStatusCode.Conflict, sameNameNoBuildAgain.StatusCode);
     }
 
     private async Task<(AppResponse App, EnvironmentResponse Staging, EnvironmentResponse Production)> CreateAppWithEnvironmentsAsync()

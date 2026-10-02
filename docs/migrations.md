@@ -94,3 +94,21 @@ How it's checked:
 - An endpoint test asserts the column is no longer written, and that duplicates are judged on the split fields.
 - The rollback test now goes through both steps' `Down()`.
 - The CI compatibility check runs the step 1 API on the switched schema.
+
+### Step 3: contract
+
+Migration `SplitReleaseVersionContract` drops `Version`. EF generates an empty migration here, because the model stopped mapping the column in step 2, so the `DropColumn` is written by hand. `Down()` adds the column back and rebuilds every value from the split fields, so rolling back to step 2 and then step 1 finds the data each expects.
+
+The step 2 API on `main` doesn't map the column, so the compatibility check passes.
+
+The parser for the old `"2.4.0 (118)"` form isn't needed by the API any more. It moved to the test project, where `MigrationTests` still checks the expand and switch migrations' SQL against it. Those migrations will keep running on every fresh database.
+
+### What it took
+
+| PR | Step | Previous API on the new schema |
+|---|---|---|
+| [#3](https://github.com/jaiminbhut/shiplog/pull/3) | Expand: add, backfill, dual-write, make `Version` nullable | The pre-split API keeps working |
+| [#4](https://github.com/jaiminbhut/shiplog/pull/4) | Switch: stop mapping `Version`, keep the column, move the unique index | The step 1 API keeps working |
+| [#5](https://github.com/jaiminbhut/shiplog/pull/5) | Contract: drop `Version` | The step 2 API keeps working |
+
+One lesson is in the history. Step 1 first shipped without making `Version` nullable. Planning step 2 showed the problem: once step 2 stopped writing the column, the step 1 API would break on step 2's rows, whether running side by side or after a rollback. The fix went into step 1 before it merged. That's what the second commit on #3 is.

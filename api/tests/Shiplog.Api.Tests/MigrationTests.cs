@@ -3,7 +3,6 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Migrations;
 using Shiplog.Api.Data;
-using Shiplog.Api.Releases;
 
 namespace Shiplog.Api.Tests;
 
@@ -49,15 +48,15 @@ public sealed class MigrationTests(ShiplogApiFactory factory)
             .ToListAsync();
 
         Assert.Equal(OldVersions.Count, rows.Count);
-        Assert.All(rows, row => Assert.Equal(ReleaseVersion.Parse(row.Version!), (row.VersionName!, row.BuildNumber)));
+        Assert.All(rows, row => Assert.Equal(LegacyVersion.Parse(row.Version!), (row.VersionName!, row.BuildNumber)));
         await db.Database.EnsureDeletedAsync();
     }
 
     [Fact]
-    public async Task RollingBackTheExpandStepRestoresVersionFromTheSplitFields()
+    public async Task RollingBackTheSwitchAndExpandStepsRestoresVersionFromTheSplitFields()
     {
         await using var db = CreateFreshDatabase();
-        await db.GetService<IMigrator>().MigrateAsync();
+        await db.GetService<IMigrator>().MigrateAsync(Switch);
 
         await db.Database.ExecuteSqlRawAsync("""
             INSERT INTO Apps (Name, CreatedAt) VALUES (N'Field App', SYSDATETIMEOFFSET());
@@ -94,6 +93,32 @@ public sealed class MigrationTests(ShiplogApiFactory factory)
             .SqlQuery<VersionRow>($"SELECT Version, VersionName, BuildNumber FROM Releases")
             .SingleAsync();
         Assert.Equal(("4.0.0 (9)", "4.0.0", 9), (row.Version, row.VersionName, row.BuildNumber));
+        await db.Database.EnsureDeletedAsync();
+    }
+
+    [Fact]
+    public async Task ContractDropsVersionAndItsRollbackRebuildsIt()
+    {
+        await using var db = CreateFreshDatabase();
+        await db.GetService<IMigrator>().MigrateAsync();
+
+        await db.Database.ExecuteSqlRawAsync("""
+            INSERT INTO Apps (Name, CreatedAt) VALUES (N'Field App', SYSDATETIMEOFFSET());
+            INSERT INTO Environments (AppId, Name, ApiUrl, IsProduction) VALUES (1, N'staging', N'https://staging.example.com/', 0);
+            INSERT INTO Releases (AppId, EnvironmentId, VersionName, BuildNumber, Platform, Status, CreatedAt, CreatedBy)
+            VALUES (1, 1, N'7.0.0', 12, N'Web', N'InProgress', SYSDATETIMEOFFSET(), N'developer@example.com');
+            """);
+        var versionColumns = () => db.Database
+            .SqlQuery<int>($"SELECT COUNT(*) AS Value FROM sys.columns WHERE object_id = OBJECT_ID(N'Releases') AND name = N'Version'")
+            .SingleAsync();
+
+        Assert.Equal(0, await versionColumns());
+
+        await db.GetService<IMigrator>().MigrateAsync(Switch);
+
+        Assert.Equal(1, await versionColumns());
+        var version = await db.Database.SqlQuery<string>($"SELECT Version AS Value FROM Releases").SingleAsync();
+        Assert.Equal("7.0.0 (12)", version);
         await db.Database.EnsureDeletedAsync();
     }
 
