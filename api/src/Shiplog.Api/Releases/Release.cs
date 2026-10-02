@@ -33,7 +33,17 @@ public sealed class Release
 
     public AppEnvironment Environment { get; set; } = null!;
 
+    /// <summary>
+    /// The old single-string form, e.g. "2.4.0 (118)". Still written in the expand
+    /// step so the previous API version keeps working; replaced by
+    /// <see cref="VersionName"/> and <see cref="BuildNumber"/>.
+    /// </summary>
     public required string Version { get; set; }
+
+    /// <summary>"2.4.0". Null only on rows the previous API version wrote during a deploy.</summary>
+    public string? VersionName { get; set; }
+
+    public int? BuildNumber { get; set; }
 
     public Platform Platform { get; set; }
 

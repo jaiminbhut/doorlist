@@ -42,6 +42,7 @@ public sealed class ShiplogDbContext(DbContextOptions<ShiplogDbContext> options)
         builder.Entity<Release>(release =>
         {
             release.Property(r => r.Version).HasMaxLength(Release.VersionMaxLength);
+            release.Property(r => r.VersionName).HasMaxLength(Release.VersionMaxLength);
             release.Property(r => r.Notes).HasMaxLength(Release.NotesMaxLength);
             release.Property(r => r.Platform).HasConversion<string>().HasMaxLength(20);
             release.Property(r => r.Status).HasConversion<string>().HasMaxLength(20);

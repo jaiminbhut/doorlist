@@ -45,3 +45,27 @@ A breaking change is split into steps, and each step passes the check against th
 Steps 2 and 3 can't be merged. While step 3's migration runs, the step 2 API must still be able to read the table, so the step 2 API must not map the column being dropped.
 
 Each step is its own pull request and its own release.
+
+## Worked example: splitting `Release.Version`
+
+Releases used to store their version as one string, `"2.4.0 (118)"`. That makes "every build of 2.4.0" or "the highest build number" awkward to query. The change splits it into `VersionName` (`"2.4.0"`) and `BuildNumber` (`118`).
+
+### Step 1: expand
+
+Migration `SplitReleaseVersionExpand`:
+
+- Adds `VersionName` (nullable `nvarchar(50)`) and `BuildNumber` (nullable `int`).
+- Backfills them from `Version` with hand-written SQL. EF generates only the two `AddColumn` calls.
+- Leaves `Version` in place. The unique index on it doesn't change.
+
+Code:
+
+- **Writes:** all three columns. `Version` keeps the display form, so the previous API version still reads and de-duplicates correctly.
+- **Reads:** `VersionName` and `BuildNumber`, falling back to parsing `Version` for rows the previous version writes during the deploy.
+- **API:** create requests take `versionName` and `buildNumber`. The old `version` string is still accepted from older clients. Responses add the two fields and keep `version` as the display form.
+
+How it's checked:
+
+- `ReleaseVersionTests` pins the C# parser on edge cases: `"1.0 (beta)"`, `"(7)"`, `"v2(3)"`, and integer overflow.
+- `MigrationTests` migrates a fresh database to the migration before this one, inserts rows in the old shape, applies the expand migration, and asserts the SQL backfill gives exactly what `ReleaseVersion.Parse` gives.
+- The CI compatibility check runs the previous API against the expanded schema.

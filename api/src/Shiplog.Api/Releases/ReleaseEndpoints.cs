@@ -15,6 +15,8 @@ public sealed record ReleaseSummary(
     string EnvironmentName,
     bool IsProduction,
     string Version,
+    string VersionName,
+    int? BuildNumber,
     Platform Platform,
     ReleaseStatus Status,
     int ChecklistDone,
@@ -37,6 +39,8 @@ public sealed record ReleaseDetail(
     bool IsProduction,
     Uri EnvironmentApiUrl,
     string Version,
+    string VersionName,
+    int? BuildNumber,
     Platform Platform,
     string? Notes,
     ReleaseStatus Status,
@@ -56,6 +60,8 @@ public sealed record ReleaseDetail(
         release.Environment.IsProduction,
         release.Environment.ApiUrl,
         release.Version,
+        release.VersionName ?? ReleaseVersion.Parse(release.Version).Name,
+        release.VersionName is null ? ReleaseVersion.Parse(release.Version).BuildNumber : release.BuildNumber,
         release.Platform,
         release.Notes,
         release.Status,
@@ -66,7 +72,15 @@ public sealed record ReleaseDetail(
         [.. release.Checklist.OrderBy(i => i.Position).Select(ChecklistItemResponse.From)]);
 }
 
-public sealed record CreateReleaseRequest(int AppId, int EnvironmentId, Platform? Platform, string? Version, string? Notes);
+/// <param name="Version">Deprecated: the old single-string form, still accepted from older clients.</param>
+public sealed record CreateReleaseRequest(
+    int AppId,
+    int EnvironmentId,
+    Platform? Platform,
+    string? VersionName,
+    int? BuildNumber,
+    string? Notes,
+    string? Version = null);
 
 public sealed record UpdateChecklistItemRequest(bool IsDone);
 
@@ -93,24 +107,37 @@ public static class ReleaseEndpoints
             query = query.Where(r => r.AppId == appId);
         }
 
-        var releases = await query
+        var rows = await query
             .OrderByDescending(r => r.CreatedAt)
             .ThenByDescending(r => r.Id)
-            .Select(r => new ReleaseSummary(
+            .Select(r => new
+            {
                 r.Id,
                 r.AppId,
-                r.App.Name,
+                AppName = r.App.Name,
                 r.EnvironmentId,
-                r.Environment.Name,
+                EnvironmentName = r.Environment.Name,
                 r.Environment.IsProduction,
                 r.Version,
+                r.VersionName,
+                r.BuildNumber,
                 r.Platform,
                 r.Status,
-                r.Checklist.Count(i => i.IsDone),
-                r.Checklist.Count,
+                ChecklistDone = r.Checklist.Count(i => i.IsDone),
+                ChecklistTotal = r.Checklist.Count,
                 r.CreatedAt,
-                r.ShippedAt))
+                r.ShippedAt,
+            })
             .ToArrayAsync(ct);
+
+        // Rows the previous API version wrote during a deploy have only Version.
+        var releases = rows.Select(r =>
+        {
+            var (name, build) = r.VersionName is null ? ReleaseVersion.Parse(r.Version) : (r.VersionName, r.BuildNumber);
+            return new ReleaseSummary(
+                r.Id, r.AppId, r.AppName, r.EnvironmentId, r.EnvironmentName, r.IsProduction,
+                r.Version, name, build, r.Platform, r.Status, r.ChecklistDone, r.ChecklistTotal, r.CreatedAt, r.ShippedAt);
+        }).ToArray();
 
         return TypedResults.Ok(releases);
     }
@@ -125,13 +152,26 @@ public static class ReleaseEndpoints
     private static async Task<Results<CreatedAtRoute<ReleaseDetail>, ValidationProblem, Conflict<ProblemDetails>>> CreateRelease(
         CreateReleaseRequest request, ShiplogDbContext db, ClaimsPrincipal user, TimeProvider clock, CancellationToken ct)
     {
-        var version = request.Version?.Trim() ?? "";
+        var (versionName, buildNumber) = string.IsNullOrWhiteSpace(request.VersionName) && !string.IsNullOrWhiteSpace(request.Version)
+            ? ReleaseVersion.Parse(request.Version)
+            : (request.VersionName?.Trim() ?? "", request.BuildNumber);
         var notes = string.IsNullOrWhiteSpace(request.Notes) ? null : request.Notes.Trim();
         var errors = new Dictionary<string, string[]>();
 
-        if (version.Length == 0 || version.Length > Release.VersionMaxLength)
+        if (versionName.Length == 0 || versionName.Length > Release.VersionMaxLength)
         {
-            errors["version"] = [$"Version is required and must be at most {Release.VersionMaxLength} characters."];
+            errors["versionName"] = [$"Version is required and must be at most {Release.VersionMaxLength} characters."];
+        }
+
+        if (buildNumber < 0)
+        {
+            errors["buildNumber"] = ["Build number can't be negative."];
+        }
+
+        var version = ReleaseVersion.Format(versionName, buildNumber);
+        if (version.Length > Release.VersionMaxLength)
+        {
+            errors["versionName"] = [$"Version and build number together must be at most {Release.VersionMaxLength} characters."];
         }
 
         if (request.Platform is null)
@@ -170,7 +210,10 @@ public static class ReleaseEndpoints
         {
             App = environment!.App,
             Environment = environment,
+            // Dual write: the previous API version still reads Version.
             Version = version,
+            VersionName = versionName,
+            BuildNumber = buildNumber,
             Platform = platform,
             Notes = notes,
             Status = ReleaseStatus.InProgress,
