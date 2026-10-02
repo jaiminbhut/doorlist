@@ -57,7 +57,8 @@ export TESTCONTAINERS_DOCKER_SOCKET_OVERRIDE=/var/run/docker.sock
   ```
 - Read the SQL before you merge. CI attaches the idempotent script as the `migrations-sql` artifact, or run `dotnet ef migrations script --idempotent --project src/Shiplog.Api` locally.
 - Never edit or delete a migration that is on `main`. Fix forward with a new one.
-- Breaking changes (rename, type change, drop) use expand/contract across two releases, so the API that is running during a deploy never meets a schema it can't read.
+- Breaking changes (rename, split, type change, drop) use expand/contract, so the API that is running during a deploy never meets a schema it can't read. See [docs/migrations.md](docs/migrations.md).
+- CI checks this on every pull request: it starts the API from `main`, runs the PR's migrations underneath it, and checks the API still reads and writes. Run it locally with `scripts/check-schema-compat.sh main`.
 - The API never migrates the database on startup ([ADR 3](docs/adr/0003-run-migrations-as-a-separate-step.md)).
 
 ## Architecture decisions
