@@ -1,0 +1,62 @@
+# Local stack: SQL Server, a one-shot migration step, the API, and the Angular
+# app behind nginx. `docker compose up --build`, then open http://localhost:8080.
+#
+# The SA password below is a local-development default only. Override it with
+# MSSQL_SA_PASSWORD in a .env file; deployed environments use their own
+# secrets and a non-SA login (milestone 3).
+
+name: shiplog
+
+x-db-connection: &db-connection "Server=db;Database=Shiplog;User Id=sa;Password=${MSSQL_SA_PASSWORD:-Shiplog_local_Passw0rd};TrustServerCertificate=True"
+
+services:
+  db:
+    # SQL Server publishes linux/amd64 images only; on Apple Silicon this runs
+    # under Rosetta (colima start --vm-type vz --vz-rosetta).
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    platform: linux/amd64
+    environment:
+      ACCEPT_EULA: "Y"
+      MSSQL_PID: Express
+      MSSQL_SA_PASSWORD: ${MSSQL_SA_PASSWORD:-Shiplog_local_Passw0rd}
+    ports:
+      - "1433:1433"
+    volumes:
+      - db-data:/var/opt/mssql
+    healthcheck:
+      test: ["CMD-SHELL", "/opt/mssql-tools18/bin/sqlcmd -C -S localhost -U sa -P \"$$MSSQL_SA_PASSWORD\" -Q 'SELECT 1' -b -o /dev/null"]
+      interval: 5s
+      timeout: 5s
+      retries: 30
+      start_period: 20s
+
+  migrate:
+    build:
+      context: ./api
+      target: migrate
+    command: ["--connection", *db-connection]
+    depends_on:
+      db:
+        condition: service_healthy
+
+  api:
+    build:
+      context: ./api
+      target: api
+    environment:
+      ConnectionStrings__Shiplog: *db-connection
+    ports:
+      - "5080:8080"
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+
+  web:
+    build: ./web
+    ports:
+      - "8080:80"
+    depends_on:
+      - api
+
+volumes:
+  db-data:
