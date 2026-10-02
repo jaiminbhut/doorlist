@@ -30,6 +30,8 @@ describe('ReleaseBoardPage', () => {
     environmentName: isProduction ? 'production' : 'staging',
     isProduction,
     version: `1.${id}.0`,
+    versionName: `1.${id}.0`,
+    buildNumber: null,
     platform: 'ios',
     status,
     checklistDone: 2,
@@ -65,6 +67,53 @@ describe('ReleaseBoardPage', () => {
     expect(inProgress.textContent).toContain('2/4 checks');
     expect(inProgress.querySelector('.badge.production')).not.toBeNull();
     expect(page().querySelector('.shipped')?.textContent).toContain('Field App 1.2.0');
+  });
+
+  it('sends the version name and build number separately', async () => {
+    await render('Developer');
+    http.expectOne('/api/releases').flush([]);
+    http
+      .expectOne('/api/apps')
+      .flush([{ id: 1, name: 'Field App', createdAt: '2026-10-02T09:00:00Z' }]);
+    await settle();
+
+    const select = (id: string, index: number) => {
+      const element = page().querySelector<HTMLSelectElement>(id)!;
+      element.selectedIndex = index;
+      element.dispatchEvent(new Event('change'));
+    };
+    const type = (id: string, value: string) => {
+      const element = page().querySelector<HTMLInputElement>(id)!;
+      element.value = value;
+      element.dispatchEvent(new Event('input'));
+    };
+
+    select('#release-app', 1);
+    await settle();
+    http.expectOne('/api/apps/1').flush({
+      id: 1,
+      name: 'Field App',
+      createdAt: '2026-10-02T09:00:00Z',
+      environments: [
+        { id: 2, name: 'staging', apiUrl: 'https://staging-api.example.com/', isProduction: false },
+      ],
+    });
+    await settle();
+    select('#release-environment', 1);
+    type('#release-version', ' 2.4.0 ');
+    type('#release-build', '118');
+    await settle();
+    page().querySelector<HTMLButtonElement>('button[type="submit"]')!.click();
+
+    const request = http.expectOne({ method: 'POST', url: '/api/releases' });
+    expect(request.request.body).toEqual({
+      appId: 1,
+      environmentId: 2,
+      platform: 'android',
+      versionName: '2.4.0',
+      buildNumber: 118,
+      notes: null,
+    });
   });
 
   it('offers the new-release form to developers but not viewers', async () => {

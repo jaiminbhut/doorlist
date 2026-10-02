@@ -48,9 +48,12 @@ export class ReleaseBoardPage implements OnInit {
       nonNullable: true,
       validators: [Validators.required],
     }),
-    version: new FormControl('', {
+    versionName: new FormControl('', {
       nonNullable: true,
       validators: [Validators.required, Validators.pattern(/\S/)],
+    }),
+    buildNumber: new FormControl<number | null>(null, {
+      validators: [Validators.min(0), Validators.pattern(/^\d+$/)],
     }),
     notes: new FormControl('', { nonNullable: true }),
   });
@@ -87,14 +90,16 @@ export class ReleaseBoardPage implements OnInit {
 
     this.saving.set(true);
     this.saveError.set(null);
-    const { appId, environmentId, platform, version, notes } = this.form.getRawValue();
+    const { appId, environmentId, platform, versionName, buildNumber, notes } =
+      this.form.getRawValue();
 
     this.releasesApi
       .create({
         appId: appId!,
         environmentId: environmentId!,
         platform,
-        version: version.trim(),
+        versionName: versionName.trim(),
+        buildNumber: buildNumber ?? null,
         notes: notes.trim() || null,
       })
       .subscribe({
