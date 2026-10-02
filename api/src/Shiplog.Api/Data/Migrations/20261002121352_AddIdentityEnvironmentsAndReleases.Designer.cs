@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Shiplog.Api.Data;
 
@@ -11,9 +12,11 @@ using Shiplog.Api.Data;
 namespace Shiplog.Api.Data.Migrations
 {
     [DbContext(typeof(ShiplogDbContext))]
-    partial class ShiplogDbContextModelSnapshot : ModelSnapshot
+    [Migration("20261002121352_AddIdentityEnvironmentsAndReleases")]
+    partial class AddIdentityEnvironmentsAndReleases
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
