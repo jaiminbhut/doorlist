@@ -1,0 +1,6 @@
+# Lives in api/ (not only the repo root) so it also applies inside the API's
+# Docker build context, which contains just this folder.
+
+# EF Core writes these; analyzers and style rules don't apply to generated migrations.
+[src/**/Migrations/*.cs]
+generated_code = true
