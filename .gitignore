@@ -17,3 +17,6 @@ dist/
 
 # CI output
 artifacts/
+
+# Local deploy rehearsal (scripts/rehearse-deploy.sh)
+.local/

@@ -4,7 +4,7 @@ A release tracker for teams that ship mobile and web apps. It keeps track of eac
 
 Shiplog is also a public reference project. Alongside the features, it shows how the whole product is built and run: an Angular front end, an ASP.NET Core API on SQL Server, EF Core migrations that run as their own deploy step, Docker, CI on every pull request, and the decisions behind each of these, written down.
 
-> **Status:** milestones 1, 2 and 4 are done; milestone 3 (deploy) is next. See the [roadmap](#roadmap).
+> **Status:** milestones 1, 2 and 4 are done. Milestone 3's deploy pipeline is built and rehearsed, and waiting for its server. See the [roadmap](#roadmap).
 
 ## What it does
 
@@ -23,7 +23,7 @@ Shiplog is also a public reference project. Alongside the features, it shows how
 | Auth | ASP.NET Core Identity, short-lived JWTs, role policies ([ADR 4](docs/adr/0004-authentication-with-identity-and-jwt.md)) |
 | Migrations | EF Core migration bundle, run as a separate step before the API starts ([ADR 3](docs/adr/0003-run-migrations-as-a-separate-step.md)); every PR checked against the running API version, breaking changes in expand/contract steps ([docs/migrations.md](docs/migrations.md)) |
 | Tests | xUnit integration tests against a real SQL Server (Testcontainers) |
-| Delivery | Docker multi-stage images, docker compose, GitHub Actions |
+| Delivery | Docker multi-stage images, GHCR, GitHub Actions; staging then production (with approval) on one server behind Caddy ([ADR 5](docs/adr/0005-single-server-deploy-with-docker-compose.md), [deploy/](deploy/README.md)) |
 
 ## Architecture
 
@@ -65,8 +65,9 @@ api/                     ASP.NET Core API, EF Core, migrations, tests
   tests/Shiplog.Api.Tests/
 web/                     Angular app
 docs/adr/                Architecture decision records
-.github/workflows/ci.yml CI: build, tests, migration checks, schema compatibility, smoke test
-scripts/                 check-schema-compat.sh
+deploy/                  Server setup, Caddy, compose files and the deploy script
+.github/workflows/       CI (build, tests, migration checks, schema compatibility, smoke test) and Deploy
+scripts/                 Schema compatibility check, deploy rehearsal, GitHub deploy setup
 docker-compose.yml       Local stack
 ```
 
@@ -76,7 +77,7 @@ docker-compose.yml       Local stack
 |---|---|
 | 1. Skeleton ✅ | `docker compose up` runs end to end; CI on every pull request |
 | 2. Domain and auth ✅ | Apps, environments, releases, checklists; ASP.NET Core Identity + JWT with roles; Angular release board |
-| 3. Deploy pipeline | Images to GHCR; release workflow with env verification, DB backup, migration bundle, API rollout and health check; staging and production; Content-Security-Policy |
+| 3. Deploy pipeline (built, waiting for the server) | Images to GHCR; release workflow with env verification, DB backup, migration bundle, API rollout and health check; staging and production; Content-Security-Policy |
 | 4. Expand/contract ✅ | A CI check that the running API survives each PR's migrations; a breaking schema change (splitting `Version`) shipped in three steps that each pass it, documented in [`docs/migrations.md`](docs/migrations.md) |
 | 5. Polish | Demo account, screenshots, `v1.0.0` |
 

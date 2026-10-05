@@ -1,0 +1,28 @@
+# Routes each hostname to its environment's web container, and gets and
+# renews HTTPS certificates from Let's Encrypt automatically. The hostnames
+# come from shared/.env.
+
+{
+	email {$ACME_EMAIL}
+	{$CADDY_LOCAL_CERTS}
+}
+
+(common) {
+	encode zstd gzip
+	header {
+		Strict-Transport-Security "max-age=31536000"
+		-Server
+	}
+}
+
+{$PRODUCTION_HOST} {
+	import common
+	reverse_proxy production-web:80
+}
+
+{$STAGING_HOST} {
+	import common
+	# Staging is public but shouldn't show up in search results.
+	header X-Robots-Tag "noindex, nofollow"
+	reverse_proxy staging-web:80
+}
