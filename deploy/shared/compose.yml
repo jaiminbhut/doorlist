@@ -1,0 +1,62 @@
+# Services shared by every environment on the server: Caddy (HTTPS and
+# routing by hostname) and one SQL Server with a database per environment.
+# Started by scripts/deploy.sh; settings come from shared/.env, which the
+# deploy workflow writes from repository secrets and variables.
+
+name: shiplog-shared
+
+services:
+  caddy:
+    image: caddy:2.10-alpine
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+      - "443:443/udp"
+    environment:
+      ACME_EMAIL: ${ACME_EMAIL}
+      PRODUCTION_HOST: ${PRODUCTION_HOST}
+      STAGING_HOST: ${STAGING_HOST}
+      # Set to "local_certs" only for the local rehearsal; empty on the server.
+      CADDY_LOCAL_CERTS: ${CADDY_LOCAL_CERTS:-}
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy-data:/data
+      - caddy-config:/config
+    networks:
+      - edge
+
+  db:
+    # linux/amd64 only: the server must be x86-64 (ADR 2).
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    platform: linux/amd64
+    restart: unless-stopped
+    environment:
+      ACCEPT_EULA: "Y"
+      MSSQL_PID: Express
+      MSSQL_SA_PASSWORD: ${MSSQL_SA_PASSWORD:?set MSSQL_SA_PASSWORD in shared/.env}
+      # Leaves room for the API, nginx and Caddy on a small server.
+      MSSQL_MEMORY_LIMIT_MB: ${MSSQL_MEMORY_LIMIT_MB:-1024}
+    volumes:
+      # Backups go to /var/opt/mssql/backups/<environment> in this volume.
+      - db-data:/var/opt/mssql
+    networks:
+      - data
+    healthcheck:
+      test: ["CMD-SHELL", "/opt/mssql-tools18/bin/sqlcmd -C -S localhost -U sa -P \"$$MSSQL_SA_PASSWORD\" -Q 'SELECT 1' -b -o /dev/null"]
+      interval: 5s
+      timeout: 5s
+      retries: 30
+      start_period: 30s
+
+networks:
+  # Named so each environment's stack can join them (external: true).
+  edge:
+    name: shiplog-edge
+  data:
+    name: shiplog-data
+
+volumes:
+  caddy-data:
+  caddy-config:
+  db-data:
