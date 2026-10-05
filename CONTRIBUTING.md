@@ -61,6 +61,16 @@ export TESTCONTAINERS_DOCKER_SOCKET_OVERRIDE=/var/run/docker.sock
 - CI checks this on every pull request: it starts the API from `main`, runs the PR's migrations underneath it, and checks the API still reads and writes. Run it locally with `scripts/check-schema-compat.sh main`.
 - The API never migrates the database on startup ([ADR 3](docs/adr/0003-run-migrations-as-a-separate-step.md)).
 
+## Deploys
+
+Merging to `main` deploys to staging, then to production once a reviewer approves. Before changing anything in `deploy/` or the deploy workflows, rehearse the whole deploy locally, including its failure paths:
+
+```sh
+scripts/rehearse-deploy.sh
+```
+
+See [deploy/README.md](deploy/README.md) for how it works, first-time setup and operating the server.
+
 ## Architecture decisions
 
 Significant decisions are recorded in [`docs/adr/`](docs/adr/) ([ADR 1](docs/adr/0001-record-architecture-decisions.md)). If your PR makes one, add an ADR to it.
