@@ -1,0 +1,119 @@
+name: Deploy environment
+
+# Called by deploy.yml once per environment. Writes the environment's
+# settings from GitHub secrets, copies deploy/ to the server, and runs
+# deploy/scripts/deploy.sh there over SSH (deploy/README.md).
+
+on:
+  workflow_call:
+    inputs:
+      environment:
+        type: string
+        required: true
+      tag:
+        type: string
+        required: true
+      sha:
+        type: string
+        required: true
+
+permissions:
+  contents: read
+  packages: read
+
+jobs:
+  deploy:
+    name: Deploy to ${{ inputs.environment }}
+    runs-on: ubuntu-latest
+    environment:
+      name: ${{ inputs.environment }}
+      url: https://${{ vars.PUBLIC_HOST }}
+    env:
+      ENVIRONMENT: ${{ inputs.environment }}
+      TAG: ${{ inputs.tag }}
+      HOST: ${{ secrets.DEPLOY_HOST }}
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          ref: ${{ inputs.sha }}
+
+      - name: Write the settings files
+        env:
+          MSSQL_SA_PASSWORD: ${{ secrets.MSSQL_SA_PASSWORD }}
+          DB_MIGRATOR_PASSWORD: ${{ secrets.DB_MIGRATOR_PASSWORD }}
+          DB_APP_PASSWORD: ${{ secrets.DB_APP_PASSWORD }}
+          JWT_SIGNING_KEY: ${{ secrets.JWT_SIGNING_KEY }}
+          DEMO_PASSWORD: ${{ secrets.DEMO_PASSWORD }}
+        run: |
+          umask 077
+          mkdir -p "$RUNNER_TEMP/settings"
+          database="Shiplog_${ENVIRONMENT}"
+          cat > "$RUNNER_TEMP/settings/shared.env" <<SETTINGS
+          ACME_EMAIL=${{ vars.ACME_EMAIL }}
+          PRODUCTION_HOST=${{ vars.PRODUCTION_HOST }}
+          STAGING_HOST=${{ vars.STAGING_HOST }}
+          MSSQL_SA_PASSWORD=${MSSQL_SA_PASSWORD}
+          MSSQL_MEMORY_LIMIT_MB=${{ vars.MSSQL_MEMORY_LIMIT_MB || '1024' }}
+          SETTINGS
+          cat > "$RUNNER_TEMP/settings/app.env" <<SETTINGS
+          ENVIRONMENT=${ENVIRONMENT}
+          DB_NAME=${database}
+          PUBLIC_HOST=${{ vars.PUBLIC_HOST }}
+          IMAGE_REGISTRY=ghcr.io/${{ github.repository_owner }}
+          DB_MIGRATOR_PASSWORD=${DB_MIGRATOR_PASSWORD}
+          DB_APP_PASSWORD=${DB_APP_PASSWORD}
+          MIGRATOR_CONNECTION=Server=db;Database=${database};User Id=shiplog_${ENVIRONMENT}_migrator;Password=${DB_MIGRATOR_PASSWORD};TrustServerCertificate=True
+          APP_CONNECTION=Server=db;Database=${database};User Id=shiplog_${ENVIRONMENT}_app;Password=${DB_APP_PASSWORD};TrustServerCertificate=True
+          JWT_SIGNING_KEY=${JWT_SIGNING_KEY}
+          DEMO_PASSWORD=${DEMO_PASSWORD}
+          SETTINGS
+
+      - name: Set up SSH
+        env:
+          DEPLOY_SSH_KEY: ${{ secrets.DEPLOY_SSH_KEY }}
+          DEPLOY_KNOWN_HOSTS: ${{ secrets.DEPLOY_KNOWN_HOSTS }}
+        run: |
+          install -m 700 -d ~/.ssh
+          install -m 600 /dev/null ~/.ssh/deploy
+          printf '%s\n' "$DEPLOY_SSH_KEY" > ~/.ssh/deploy
+          printf '%s\n' "$DEPLOY_KNOWN_HOSTS" > ~/.ssh/known_hosts
+          cat > ~/.ssh/config <<CONFIG
+          Host server
+            HostName ${HOST}
+            User deploy
+            IdentityFile ~/.ssh/deploy
+            StrictHostKeyChecking yes
+            ServerAliveInterval 30
+          CONFIG
+
+      - name: Copy deploy files and settings to the server
+        run: |
+          # shellcheck disable=SC2029 # expanded on the runner, on purpose
+          ssh server "mkdir -p /opt/shiplog/deploy /opt/shiplog/shared /opt/shiplog/${ENVIRONMENT}"
+          rsync -a --delete deploy/ server:/opt/shiplog/deploy/
+          ssh server "umask 077 && cat > /opt/shiplog/shared/.env" < "$RUNNER_TEMP/settings/shared.env"
+          # shellcheck disable=SC2029 # expanded on the runner, on purpose
+          ssh server "umask 077 && cat > /opt/shiplog/${ENVIRONMENT}/.env" < "$RUNNER_TEMP/settings/app.env"
+
+      - name: Deploy ${{ inputs.tag }}
+        env:
+          GHCR_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          # The server pulls from GHCR with this job's short-lived token.
+          printf '%s' "$GHCR_TOKEN" | ssh server "docker login ghcr.io -u ${{ github.actor }} --password-stdin" >/dev/null
+          status=0
+          # shellcheck disable=SC2029 # expanded on the runner, on purpose
+          ssh server "/opt/shiplog/deploy/scripts/deploy.sh ${ENVIRONMENT} ${TAG}" || status=$?
+          ssh server "docker logout ghcr.io" >/dev/null || true
+          exit "$status"
+
+      - name: Check it from the internet
+        run: |
+          curl --fail --silent --show-error --retry 10 --retry-delay 6 --retry-all-errors \
+            "https://${{ vars.PUBLIC_HOST }}/api/health"
+          echo
+          curl --fail --silent --show-error --head "https://${{ vars.PUBLIC_HOST }}/" | grep -i '^content-security-policy'
+
+      - name: Remove local copies of the settings
+        if: always()
+        run: rm -rf "$RUNNER_TEMP/settings" ~/.ssh/deploy
