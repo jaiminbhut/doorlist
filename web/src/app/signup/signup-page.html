@@ -1,0 +1,44 @@
+<section class="panel" aria-labelledby="signup-heading">
+  <header>
+    <h2 id="signup-heading">Sign up</h2>
+    <p class="muted">
+      Create an account to claim free tickets. Already have one? <a routerLink="/login">Sign in</a>.
+    </p>
+  </header>
+
+  <form [formGroup]="form" (ngSubmit)="signUp()">
+    <div class="field">
+      <label for="signup-name">Your name</label>
+      <input id="signup-name" type="text" autocomplete="name" formControlName="displayName" />
+      @for (message of errors()['displayName'] ?? []; track message) {
+        <p class="error" role="alert">{{ message }}</p>
+      }
+    </div>
+    <div class="field">
+      <label for="signup-email">Email</label>
+      <input id="signup-email" type="email" autocomplete="email" formControlName="email" />
+      @for (message of errors()['email'] ?? []; track message) {
+        <p class="error" role="alert">{{ message }}</p>
+      }
+    </div>
+    <div class="field">
+      <label for="signup-password">Password</label>
+      <input
+        id="signup-password"
+        type="password"
+        autocomplete="new-password"
+        formControlName="password"
+      />
+      <p class="muted">At least 12 characters, with upper and lower case, a number and a symbol.</p>
+      @for (message of errors()['password'] ?? []; track message) {
+        <p class="error" role="alert">{{ message }}</p>
+      }
+    </div>
+    <button class="primary" type="submit" [disabled]="form.invalid || signingUp()">
+      {{ signingUp() ? 'Signing up…' : 'Sign up' }}
+    </button>
+    @for (message of errors()[''] ?? []; track message) {
+      <p class="error" role="alert">{{ message }}</p>
+    }
+  </form>
+</section>

@@ -1,0 +1,73 @@
+<p><a routerLink="/events">← All events</a></p>
+
+@if (loadError(); as message) {
+  <p class="error" role="alert">{{ message }}</p>
+} @else if (event(); as event) {
+  <section class="panel" aria-labelledby="event-heading">
+    <header>
+      <h2 id="event-heading">{{ event.name }}</h2>
+      <p class="muted">
+        {{ event.venue }} · {{ event.startsAt | date: 'EEEE d MMMM y, HH:mm' }} –
+        {{ event.endsAt | date: 'HH:mm' }}
+        @if (event.status === 'draft') {
+          <span class="badge">Draft</span>
+        }
+      </p>
+    </header>
+
+    @if (event.description) {
+      <p class="description">{{ event.description }}</p>
+    }
+
+    <h3>Tickets</h3>
+    <ul class="list ticket-types">
+      @for (type of event.ticketTypes; track type.id) {
+        <li>
+          <span class="strong">{{ type.name }}</span>
+          <span class="muted">{{
+            type.remaining > 0 ? type.remaining + ' of ' + type.capacity + ' left' : 'Sold out'
+          }}</span>
+        </li>
+      }
+    </ul>
+
+    @if (auth.isAttendee()) {
+      <form class="claim-form" [formGroup]="form" (ngSubmit)="claim()">
+        <div class="grid-2">
+          <div class="field">
+            <label for="claim-type">Ticket</label>
+            <select id="claim-type" formControlName="ticketTypeId">
+              @for (type of event.ticketTypes; track type.id) {
+                <option [ngValue]="type.id" [disabled]="type.remaining === 0">
+                  {{ type.name }}
+                </option>
+              }
+            </select>
+          </div>
+          <div class="field">
+            <label for="claim-quantity">How many</label>
+            <select id="claim-quantity" formControlName="quantity">
+              @for (n of quantities; track n) {
+                <option [ngValue]="n">{{ n }}</option>
+              }
+            </select>
+          </div>
+        </div>
+        <button class="primary" type="submit" [disabled]="form.invalid || claiming()">
+          {{ claiming() ? 'Claiming…' : 'Get tickets' }}
+        </button>
+        @if (claimError(); as message) {
+          <p class="error" role="alert">{{ message }}</p>
+        }
+      </form>
+    } @else if (!auth.user()) {
+      <p class="notice sign-up-prompt">
+        <a routerLink="/signup">Sign up</a> or
+        <a routerLink="/login" [queryParams]="{ returnUrl: '/events/' + event.id }">sign in</a>
+        to get tickets.
+      </p>
+    }
+  </section>
+} @else {
+  <p class="muted">Loading…</p>
+}

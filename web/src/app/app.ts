@@ -14,6 +14,6 @@ export class App {
 
   protected signOut(): void {
     this.auth.signOut();
-    void this.router.navigate(['/login']);
+    void this.router.navigate(['/events']);
   }
 }

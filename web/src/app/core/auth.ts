@@ -2,7 +2,7 @@ import { HttpClient } from '@angular/common/http';
 import { Injectable, computed, inject, signal } from '@angular/core';
 import { Observable, map, tap } from 'rxjs';
 
-export type Role = 'Lead' | 'Developer' | 'Viewer';
+export type Role = 'Organizer' | 'DoorStaff' | 'Attendee' | 'Lead' | 'Developer' | 'Viewer';
 
 export interface SignedInUser {
   email: string;
@@ -28,6 +28,11 @@ export class AuthService {
   private readonly session = signal<Session | null>(readStoredSession());
 
   readonly user = computed(() => this.session()?.user ?? null);
+  readonly canManageEvents = computed(() => this.hasRole('Organizer'));
+  readonly isAttendee = computed(() => this.hasRole('Attendee'));
+  readonly usesReleaseTracker = computed(() =>
+    ['Lead', 'Developer', 'Viewer'].some((role) => this.hasRole(role as Role)),
+  );
   readonly canManageApps = computed(() => this.hasRole('Lead'));
   readonly canWorkOnReleases = computed(() => this.hasRole('Lead') || this.hasRole('Developer'));
 
@@ -56,6 +61,31 @@ export class AuthService {
       }),
       map((session) => session.user),
     );
+  }
+
+  /** Signs up as an attendee (the only role anyone can sign up for) and signs in. */
+  signUp(email: string, password: string, displayName: string): Observable<SignedInUser> {
+    return this.http.post<Session>('/api/auth/register', { email, password, displayName }).pipe(
+      tap((session) => {
+        this.session.set(session);
+        writeStoredSession(session);
+      }),
+      map((session) => session.user),
+    );
+  }
+
+  /** Where a user lands after signing in: the page for what they do. */
+  homePath(): string {
+    if (this.hasRole('Organizer')) {
+      return '/organizer';
+    }
+    if (this.hasRole('Attendee')) {
+      return '/tickets';
+    }
+    if (this.usesReleaseTracker()) {
+      return '/releases';
+    }
+    return '/events';
   }
 
   signOut(): void {

@@ -1,10 +1,11 @@
 import { TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
 import { App } from './app';
+import { Role } from './core/auth';
 import { provideFakeAuth } from './testing/fake-auth';
 
 describe('App', () => {
-  const render = async (...roles: Parameters<typeof provideFakeAuth>) => {
+  const render = async (...roles: Role[]) => {
     TestBed.configureTestingModule({
       imports: [App],
       providers: [provideRouter([]), provideFakeAuth(...roles)],
@@ -14,18 +15,24 @@ describe('App', () => {
     return fixture.nativeElement as HTMLElement;
   };
 
+  const links = (page: HTMLElement) =>
+    [...page.querySelectorAll('nav a')].map((a) => a.textContent?.trim());
+
   it('renders the product name in the header', async () => {
     const page = await render();
 
     expect(page.querySelector('h1')?.textContent).toContain('Doorlist');
   });
 
-  it('shows navigation and the role only when signed in', async () => {
-    const signedOut = await render();
-    expect(signedOut.querySelector('nav')).toBeNull();
+  it('offers events, sign in and sign up to visitors', async () => {
+    expect(links(await render())).toEqual(['Events', 'Sign in', 'Sign up']);
+  });
 
+  it('shows each role the pages for what it does', async () => {
+    expect(links(await render('Attendee'))).toEqual(['Events', 'My tickets']);
     TestBed.resetTestingModule();
-    const signedIn = await render('Developer');
-    expect(signedIn.querySelector('nav')?.textContent).toContain('Developer');
+    const organizer = await render('Organizer');
+    expect(links(organizer)).toEqual(['Events', 'Organize']);
+    expect(organizer.querySelector('nav')?.textContent).toContain('Organizer');
   });
 });

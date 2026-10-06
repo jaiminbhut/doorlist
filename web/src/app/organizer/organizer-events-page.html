@@ -1,0 +1,69 @@
+<section class="panel" aria-labelledby="new-event-heading">
+  <header>
+    <h2 id="new-event-heading">New event</h2>
+    <p class="muted">It starts as a draft. Add ticket types, then publish it.</p>
+  </header>
+
+  <form [formGroup]="form" (ngSubmit)="create()">
+    <div class="grid-2">
+      <div class="field">
+        <label for="event-name">Name</label>
+        <input id="event-name" type="text" formControlName="name" />
+      </div>
+      <div class="field">
+        <label for="event-venue">Venue</label>
+        <input id="event-venue" type="text" formControlName="venue" />
+      </div>
+      <div class="field">
+        <label for="event-starts">Starts</label>
+        <input id="event-starts" type="datetime-local" formControlName="startsAt" />
+      </div>
+      <div class="field">
+        <label for="event-ends">Ends</label>
+        <input id="event-ends" type="datetime-local" formControlName="endsAt" />
+      </div>
+    </div>
+    <div class="field">
+      <label for="event-description">Description</label>
+      <textarea id="event-description" formControlName="description"></textarea>
+    </div>
+    @if (form.hasError('endsBeforeStart')) {
+      <p class="error" role="alert">The event has to end after it starts.</p>
+    }
+    <button class="primary" type="submit" [disabled]="form.invalid || saving()">
+      {{ saving() ? 'Creating…' : 'Create draft' }}
+    </button>
+    @if (saveError(); as message) {
+      <p class="error" role="alert">{{ message }}</p>
+    }
+  </form>
+</section>
+
+<section class="panel" aria-labelledby="my-events-heading">
+  <header>
+    <h2 id="my-events-heading">Events</h2>
+  </header>
+
+  @if (loading()) {
+    <p class="muted">Loading events…</p>
+  } @else if (loadError(); as message) {
+    <p class="error" role="alert">{{ message }}</p>
+  } @else {
+    <ul class="list organizer-events">
+      @for (event of events(); track event.id) {
+        <li>
+          <span>
+            <a class="strong" [routerLink]="['/organizer/events', event.id]">{{ event.name }}</a>
+            <span class="muted"> · {{ event.startsAt | date: 'd MMM y, HH:mm' }}</span>
+            <span class="badge" [class.shipped]="event.status === 'published'">{{
+              event.status === 'published' ? 'Published' : 'Draft'
+            }}</span>
+          </span>
+          <span class="muted">{{ issued(event) }} / {{ capacity(event) }} claimed</span>
+        </li>
+      } @empty {
+        <li class="muted empty">No events yet. Create the first one above.</li>
+      }
+    </ul>
+  }
+</section>

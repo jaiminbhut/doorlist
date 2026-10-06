@@ -1,12 +1,12 @@
 import { HttpErrorResponse } from '@angular/common/http';
 import { Component, inject, input, signal } from '@angular/core';
 import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
-import { Router } from '@angular/router';
+import { Router, RouterLink } from '@angular/router';
 import { AuthService } from '../core/auth';
 
 @Component({
   selector: 'app-login-page',
-  imports: [ReactiveFormsModule],
+  imports: [ReactiveFormsModule, RouterLink],
   templateUrl: './login-page.html',
 })
 export class LoginPage {
@@ -37,7 +37,8 @@ export class LoginPage {
     const { email, password } = this.form.getRawValue();
 
     this.auth.signIn(email.trim(), password).subscribe({
-      next: () => void this.router.navigateByUrl(safeReturnUrl(this.returnUrl())),
+      next: () =>
+        void this.router.navigateByUrl(safeReturnUrl(this.returnUrl()) ?? this.auth.homePath()),
       error: (error: HttpErrorResponse) => {
         this.error.set(
           error.status === 401
@@ -50,7 +51,7 @@ export class LoginPage {
   }
 }
 
-/** Only same-app paths: never an absolute or protocol-relative URL. */
-export function safeReturnUrl(url: string | undefined): string {
-  return url?.startsWith('/') && !url.startsWith('//') ? url : '/releases';
+/** Only same-app paths: never an absolute or protocol-relative URL. Null means "go home". */
+export function safeReturnUrl(url: string | undefined): string | null {
+  return url?.startsWith('/') && !url.startsWith('//') ? url : null;
 }
