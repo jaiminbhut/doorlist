@@ -2,7 +2,7 @@ import { HttpClient } from '@angular/common/http';
 import { Injectable, computed, inject, signal } from '@angular/core';
 import { Observable, map, tap } from 'rxjs';
 
-export type Role = 'Organizer' | 'DoorStaff' | 'Attendee' | 'Lead' | 'Developer' | 'Viewer';
+export type Role = 'Organizer' | 'DoorStaff' | 'Attendee';
 
 export interface SignedInUser {
   email: string;
@@ -31,11 +31,6 @@ export class AuthService {
   readonly canManageEvents = computed(() => this.hasRole('Organizer'));
   readonly isAttendee = computed(() => this.hasRole('Attendee'));
   readonly canCheckIn = computed(() => this.hasRole('DoorStaff') || this.hasRole('Organizer'));
-  readonly usesReleaseTracker = computed(() =>
-    ['Lead', 'Developer', 'Viewer'].some((role) => this.hasRole(role as Role)),
-  );
-  readonly canManageApps = computed(() => this.hasRole('Lead'));
-  readonly canWorkOnReleases = computed(() => this.hasRole('Lead') || this.hasRole('Developer'));
 
   hasRole(role: Role): boolean {
     return this.session()?.user.roles.includes(role) ?? false;
@@ -85,9 +80,6 @@ export class AuthService {
     }
     if (this.hasRole('Attendee')) {
       return '/tickets';
-    }
-    if (this.usesReleaseTracker()) {
-      return '/releases';
     }
     return '/events';
   }

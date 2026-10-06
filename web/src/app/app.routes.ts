@@ -1,6 +1,4 @@
 import { Routes } from '@angular/router';
-import { AppDetailPage } from './apps/app-detail-page';
-import { AppsPage } from './apps/apps-page';
 import { roleGuard } from './core/role.guard';
 import { DoorPage } from './door/door-page';
 import { DoorSelectPage } from './door/door-select-page';
@@ -9,13 +7,8 @@ import { EventsPage } from './events/events-page';
 import { LoginPage } from './login/login-page';
 import { OrganizerEventPage } from './organizer/organizer-event-page';
 import { OrganizerEventsPage } from './organizer/organizer-events-page';
-import { ReleaseBoardPage } from './releases/release-board-page';
-import { ReleaseDetailPage } from './releases/release-detail-page';
 import { SignupPage } from './signup/signup-page';
 import { MyTicketsPage } from './tickets/my-tickets-page';
-
-/** The retired release tracker's roles (ADR 6); its pages go with it. */
-const releaseTracker = roleGuard('Lead', 'Developer', 'Viewer');
 
 export const routes: Routes = [
   { path: '', pathMatch: 'full', redirectTo: 'events' },
@@ -44,7 +37,6 @@ export const routes: Routes = [
     canActivate: [roleGuard('Organizer')],
     title: 'Organize event · Doorlist',
   },
-
   {
     path: 'door',
     component: DoorSelectPage,
@@ -56,26 +48,6 @@ export const routes: Routes = [
     component: DoorPage,
     canActivate: [roleGuard('DoorStaff', 'Organizer')],
     title: 'Check-in · Doorlist',
-  },
-
-  {
-    path: 'releases',
-    component: ReleaseBoardPage,
-    canActivate: [releaseTracker],
-    title: 'Releases · Doorlist',
-  },
-  {
-    path: 'releases/:id',
-    component: ReleaseDetailPage,
-    canActivate: [releaseTracker],
-    title: 'Release · Doorlist',
-  },
-  { path: 'apps', component: AppsPage, canActivate: [releaseTracker], title: 'Apps · Doorlist' },
-  {
-    path: 'apps/:id',
-    component: AppDetailPage,
-    canActivate: [releaseTracker],
-    title: 'App · Doorlist',
   },
 
   { path: '**', redirectTo: 'events' },

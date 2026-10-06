@@ -1,12 +1,10 @@
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using System.Threading.RateLimiting;
-using Doorlist.Api.Apps;
 using Doorlist.Api.Auth;
 using Doorlist.Api.CheckIns;
 using Doorlist.Api.Data;
 using Doorlist.Api.Events;
-using Doorlist.Api.Releases;
 using Doorlist.Api.Tickets;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
@@ -71,9 +69,7 @@ builder.Services.AddAuthorizationBuilder()
     .SetFallbackPolicy(new AuthorizationPolicyBuilder().RequireAuthenticatedUser().Build())
     .AddPolicy(Policies.ManageEvents, policy => policy.RequireRole(Roles.Organizer))
     .AddPolicy(Policies.ClaimTickets, policy => policy.RequireRole(Roles.Attendee))
-    .AddPolicy(Policies.CheckIn, policy => policy.RequireRole(Roles.DoorStaff, Roles.Organizer))
-    .AddPolicy(Policies.ManageApps, policy => policy.RequireRole(Roles.Lead))
-    .AddPolicy(Policies.WorkOnReleases, policy => policy.RequireRole(Roles.Lead, Roles.Developer));
+    .AddPolicy(Policies.CheckIn, policy => policy.RequireRole(Roles.DoorStaff, Roles.Organizer));
 
 // Ticket codes are signed so door devices can check them offline (ADR 7).
 builder.Services.AddOptions<TicketOptions>()
@@ -138,7 +134,5 @@ app.MapAuthEndpoints();
 app.MapEventEndpoints();
 app.MapTicketEndpoints();
 app.MapCheckInEndpoints();
-app.MapAppEndpoints();
-app.MapReleaseEndpoints();
 
 await app.RunAsync();

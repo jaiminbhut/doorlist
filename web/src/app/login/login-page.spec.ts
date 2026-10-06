@@ -63,18 +63,18 @@ describe('LoginPage', () => {
   });
 
   it('goes back to where the user was headed after signing in', async () => {
-    fixture.componentRef.setInput('returnUrl', '/releases/7');
+    fixture.componentRef.setInput('returnUrl', '/events/7');
     await fillIn('lead@example.com', 'right');
     page().querySelector<HTMLButtonElement>('button[type="submit"]')!.click();
 
     http.expectOne('/api/auth/login').flush({
       accessToken: 't',
       expiresAt: new Date(Date.now() + 3_600_000).toISOString(),
-      user: { email: 'lead@example.com', displayName: 'Lead', roles: ['Lead'] },
+      user: { email: 'attendee@example.com', displayName: 'Attendee', roles: ['Attendee'] },
     });
     await settle();
 
-    expect(navigated).toBe('/releases/7');
+    expect(navigated).toBe('/events/7');
   });
 
   it('goes to the page for what the user does when there is nowhere to return to', async () => {

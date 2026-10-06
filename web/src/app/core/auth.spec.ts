@@ -19,35 +19,21 @@ describe('AuthService', () => {
     const { auth, http } = setUp();
     let signedIn = '';
 
-    auth.signIn('lead@example.com', 'secret').subscribe((user) => (signedIn = user.email));
+    auth.signIn('organizer@example.com', 'secret').subscribe((user) => (signedIn = user.email));
     const request = http.expectOne('/api/auth/login');
-    expect(request.request.body).toEqual({ email: 'lead@example.com', password: 'secret' });
+    expect(request.request.body).toEqual({ email: 'organizer@example.com', password: 'secret' });
     request.flush({
       accessToken: 'abc',
       expiresAt: hourFromNow(),
-      user: { email: 'lead@example.com', displayName: 'Lead', roles: ['Lead'] },
+      user: { email: 'organizer@example.com', displayName: 'Organizer', roles: ['Organizer'] },
     });
 
-    expect(signedIn).toBe('lead@example.com');
+    expect(signedIn).toBe('organizer@example.com');
     expect(auth.token()).toBe('abc');
-    expect(auth.canManageApps()).toBe(true);
-    expect(auth.canWorkOnReleases()).toBe(true);
+    expect(auth.canManageEvents()).toBe(true);
+    expect(auth.canCheckIn()).toBe(true);
+    expect(auth.isAttendee()).toBe(false);
     expect(sessionStorage.getItem('doorlist.session')).toContain('abc');
-  });
-
-  it('gives a developer release work but not app management', () => {
-    sessionStorage.setItem(
-      'doorlist.session',
-      JSON.stringify({
-        accessToken: 't',
-        expiresAt: hourFromNow(),
-        user: { email: 'd', displayName: 'D', roles: ['Developer'] },
-      }),
-    );
-    const { auth } = setUp();
-
-    expect(auth.canWorkOnReleases()).toBe(true);
-    expect(auth.canManageApps()).toBe(false);
   });
 
   it('ignores a stored session that has expired', () => {
@@ -123,7 +109,7 @@ describe('AuthService', () => {
       JSON.stringify({
         accessToken: 't',
         expiresAt: hourFromNow(),
-        user: { email: 'v', displayName: 'V', roles: ['Viewer'] },
+        user: { email: 'a', displayName: 'A', roles: ['Attendee'] },
       }),
     );
     const { auth } = setUp();
