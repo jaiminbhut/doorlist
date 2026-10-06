@@ -32,7 +32,9 @@ describe('App', () => {
     expect(links(await render('Attendee'))).toEqual(['Events', 'My tickets']);
     TestBed.resetTestingModule();
     const organizer = await render('Organizer');
-    expect(links(organizer)).toEqual(['Events', 'Organize']);
+    expect(links(organizer)).toEqual(['Events', 'Organize', 'Door']);
+    TestBed.resetTestingModule();
+    expect(links(await render('DoorStaff'))).toEqual(['Events', 'Door']);
     expect(organizer.querySelector('nav')?.textContent).toContain('Organizer');
   });
 });

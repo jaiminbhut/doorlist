@@ -2,6 +2,8 @@ import { Routes } from '@angular/router';
 import { AppDetailPage } from './apps/app-detail-page';
 import { AppsPage } from './apps/apps-page';
 import { roleGuard } from './core/role.guard';
+import { DoorPage } from './door/door-page';
+import { DoorSelectPage } from './door/door-select-page';
 import { EventDetailPage } from './events/event-detail-page';
 import { EventsPage } from './events/events-page';
 import { LoginPage } from './login/login-page';
@@ -41,6 +43,19 @@ export const routes: Routes = [
     component: OrganizerEventPage,
     canActivate: [roleGuard('Organizer')],
     title: 'Organize event · Doorlist',
+  },
+
+  {
+    path: 'door',
+    component: DoorSelectPage,
+    canActivate: [roleGuard('DoorStaff', 'Organizer')],
+    title: 'Door · Doorlist',
+  },
+  {
+    path: 'door/:id',
+    component: DoorPage,
+    canActivate: [roleGuard('DoorStaff', 'Organizer')],
+    title: 'Check-in · Doorlist',
   },
 
   {

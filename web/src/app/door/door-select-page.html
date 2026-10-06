@@ -1,0 +1,39 @@
+<section class="panel" aria-labelledby="door-heading">
+  <header>
+    <h2 id="door-heading">Door</h2>
+    <p class="muted">
+      Pick the event you're checking tickets for. This device keeps working if the connection drops.
+    </p>
+  </header>
+
+  <div class="field">
+    <label for="door-name">This door</label>
+    <input
+      id="door-name"
+      type="text"
+      placeholder="North door"
+      maxlength="50"
+      [formControl]="doorName"
+    />
+    <p class="muted">Shown when a ticket is refused, so other doors know where it was used.</p>
+  </div>
+
+  @if (loading()) {
+    <p class="muted">Loading events…</p>
+  } @else if (loadError(); as message) {
+    <p class="error" role="alert">{{ message }}</p>
+  } @else {
+    <ul class="list door-events">
+      @for (event of upcoming(); track event.id) {
+        <li>
+          <a class="strong" [routerLink]="['/door', event.id]">{{ event.name }}</a>
+          <span class="muted"
+            >{{ event.venue }} · {{ event.startsAt | date: 'EEE d MMM, HH:mm' }}</span
+          >
+        </li>
+      } @empty {
+        <li class="muted empty">No upcoming events.</li>
+      }
+    </ul>
+  }
+</section>

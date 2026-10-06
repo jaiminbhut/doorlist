@@ -30,6 +30,7 @@ export class AuthService {
   readonly user = computed(() => this.session()?.user ?? null);
   readonly canManageEvents = computed(() => this.hasRole('Organizer'));
   readonly isAttendee = computed(() => this.hasRole('Attendee'));
+  readonly canCheckIn = computed(() => this.hasRole('DoorStaff') || this.hasRole('Organizer'));
   readonly usesReleaseTracker = computed(() =>
     ['Lead', 'Developer', 'Viewer'].some((role) => this.hasRole(role as Role)),
   );
@@ -78,6 +79,9 @@ export class AuthService {
   homePath(): string {
     if (this.hasRole('Organizer')) {
       return '/organizer';
+    }
+    if (this.hasRole('DoorStaff')) {
+      return '/door';
     }
     if (this.hasRole('Attendee')) {
       return '/tickets';

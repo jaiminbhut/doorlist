@@ -101,6 +101,22 @@ describe('AuthService', () => {
     expect(auth.homePath()).toBe('/organizer');
   });
 
+  it('sends door staff to the door', () => {
+    sessionStorage.setItem(
+      'doorlist.session',
+      JSON.stringify({
+        accessToken: 't',
+        expiresAt: hourFromNow(),
+        user: { email: 'd', displayName: 'D', roles: ['DoorStaff'] },
+      }),
+    );
+    const { auth } = setUp();
+
+    expect(auth.canCheckIn()).toBe(true);
+    expect(auth.canManageEvents()).toBe(false);
+    expect(auth.homePath()).toBe('/door');
+  });
+
   it('signs out and forgets the session', () => {
     sessionStorage.setItem(
       'doorlist.session',

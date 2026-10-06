@@ -13,12 +13,20 @@ export function fakeAuth(...roles: Role[]) {
     user: signal(user).asReadonly(),
     canManageEvents: computed(() => has('Organizer')),
     isAttendee: computed(() => has('Attendee')),
+    canCheckIn: computed(() => has('DoorStaff') || has('Organizer')),
     usesReleaseTracker: computed(() => has('Lead') || has('Developer') || has('Viewer')),
     canManageApps: computed(() => has('Lead')),
     canWorkOnReleases: computed(() => has('Lead') || has('Developer')),
     hasRole: has,
     token: () => (user ? 'test-token' : null),
-    homePath: () => (has('Organizer') ? '/organizer' : has('Attendee') ? '/tickets' : '/events'),
+    homePath: () =>
+      has('Organizer')
+        ? '/organizer'
+        : has('DoorStaff')
+          ? '/door'
+          : has('Attendee')
+            ? '/tickets'
+            : '/events',
     signOut: () => {
       fake.signedOut = true;
     },
