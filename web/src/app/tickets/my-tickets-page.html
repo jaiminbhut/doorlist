@@ -1,0 +1,33 @@
+<section class="panel" aria-labelledby="tickets-heading">
+  <header>
+    <h2 id="tickets-heading">My tickets</h2>
+    <p class="muted">
+      Show the QR code at the door. It works even if the venue's internet doesn't.
+    </p>
+  </header>
+
+  @if (loading()) {
+    <p class="muted">Loading your tickets…</p>
+  } @else if (loadError(); as message) {
+    <p class="error" role="alert">{{ message }}</p>
+  } @else {
+    <ul class="tickets">
+      @for (ticket of tickets(); track ticket.id) {
+        <li class="ticket">
+          <img
+            class="qr"
+            [src]="ticket.qr"
+            [alt]="'QR code for your ' + ticket.ticketTypeName + ' ticket to ' + ticket.eventName"
+          />
+          <div>
+            <a class="strong" [routerLink]="['/events', ticket.eventId]">{{ ticket.eventName }}</a>
+            <p class="muted">{{ ticket.ticketTypeName }} · {{ ticket.venue }}</p>
+            <p class="muted">{{ ticket.startsAt | date: 'EEE d MMM y, HH:mm' }}</p>
+          </div>
+        </li>
+      } @empty {
+        <li class="muted empty">No tickets yet. <a routerLink="/events">Find an event</a>.</li>
+      }
+    </ul>
+  }
+</section>

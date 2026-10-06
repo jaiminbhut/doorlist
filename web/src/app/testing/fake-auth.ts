@@ -6,14 +6,19 @@ export function fakeAuth(...roles: Role[]) {
   const user: SignedInUser | null = roles.length
     ? { email: 'someone@example.com', displayName: 'Someone', roles }
     : null;
+  const has = (role: Role) => roles.includes(role);
 
   const fake = {
     signedOut: false,
     user: signal(user).asReadonly(),
-    canManageApps: computed(() => roles.includes('Lead')),
-    canWorkOnReleases: computed(() => roles.includes('Lead') || roles.includes('Developer')),
-    hasRole: (role: Role) => roles.includes(role),
+    canManageEvents: computed(() => has('Organizer')),
+    isAttendee: computed(() => has('Attendee')),
+    usesReleaseTracker: computed(() => has('Lead') || has('Developer') || has('Viewer')),
+    canManageApps: computed(() => has('Lead')),
+    canWorkOnReleases: computed(() => has('Lead') || has('Developer')),
+    hasRole: has,
     token: () => (user ? 'test-token' : null),
+    homePath: () => (has('Organizer') ? '/organizer' : has('Attendee') ? '/tickets' : '/events'),
     signOut: () => {
       fake.signedOut = true;
     },

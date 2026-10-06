@@ -77,10 +77,24 @@ describe('LoginPage', () => {
     expect(navigated).toBe('/releases/7');
   });
 
+  it('goes to the page for what the user does when there is nowhere to return to', async () => {
+    await fillIn('organizer@example.com', 'right');
+    page().querySelector<HTMLButtonElement>('button[type="submit"]')!.click();
+
+    http.expectOne('/api/auth/login').flush({
+      accessToken: 't',
+      expiresAt: new Date(Date.now() + 3_600_000).toISOString(),
+      user: { email: 'organizer@example.com', displayName: 'Organizer', roles: ['Organizer'] },
+    });
+    await settle();
+
+    expect(navigated).toBe('/organizer');
+  });
+
   it('never redirects off the site after signing in', () => {
-    expect(safeReturnUrl('https://evil.example.com')).toBe('/releases');
-    expect(safeReturnUrl('//evil.example.com')).toBe('/releases');
-    expect(safeReturnUrl(undefined)).toBe('/releases');
-    expect(safeReturnUrl('/apps/3')).toBe('/apps/3');
+    expect(safeReturnUrl('https://evil.example.com')).toBeNull();
+    expect(safeReturnUrl('//evil.example.com')).toBeNull();
+    expect(safeReturnUrl(undefined)).toBeNull();
+    expect(safeReturnUrl('/events/3')).toBe('/events/3');
   });
 });

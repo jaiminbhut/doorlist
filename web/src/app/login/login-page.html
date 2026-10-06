@@ -1,7 +1,7 @@
 <section class="panel login" aria-labelledby="login-heading">
   <header>
     <h2 id="login-heading">Sign in</h2>
-    <p class="muted">Use the account your lead set up for you.</p>
+    <p class="muted">New here? <a routerLink="/signup">Sign up</a> to claim tickets.</p>
   </header>
 
   <form [formGroup]="form" (ngSubmit)="signIn()">

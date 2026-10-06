@@ -18,6 +18,11 @@
   letter-spacing: -0.01em;
 }
 
+.site-header h1 a {
+  color: inherit;
+  text-decoration: none;
+}
+
 .site-header p {
   margin: 2px 0 0;
   color: var(--muted);

@@ -65,6 +65,42 @@ describe('AuthService', () => {
     expect(auth.user()).toBeNull();
   });
 
+  it('signs up as an attendee and lands them on their tickets', () => {
+    const { auth, http } = setUp();
+
+    auth.signUp('asha@example.com', 'A-strong-pass-1', 'Asha').subscribe();
+    const request = http.expectOne('/api/auth/register');
+    expect(request.request.body).toEqual({
+      email: 'asha@example.com',
+      password: 'A-strong-pass-1',
+      displayName: 'Asha',
+    });
+    request.flush({
+      accessToken: 'new',
+      expiresAt: hourFromNow(),
+      user: { email: 'asha@example.com', displayName: 'Asha', roles: ['Attendee'] },
+    });
+
+    expect(auth.token()).toBe('new');
+    expect(auth.isAttendee()).toBe(true);
+    expect(auth.homePath()).toBe('/tickets');
+  });
+
+  it('sends organizers to their dashboard', () => {
+    sessionStorage.setItem(
+      'doorlist.session',
+      JSON.stringify({
+        accessToken: 't',
+        expiresAt: hourFromNow(),
+        user: { email: 'o', displayName: 'O', roles: ['Organizer'] },
+      }),
+    );
+    const { auth } = setUp();
+
+    expect(auth.canManageEvents()).toBe(true);
+    expect(auth.homePath()).toBe('/organizer');
+  });
+
   it('signs out and forgets the session', () => {
     sessionStorage.setItem(
       'doorlist.session',
