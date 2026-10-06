@@ -4,14 +4,17 @@ Free event tickets with door check-in. Organizers create events with ticket type
 
 Doorlist is also a public reference project. Alongside the features, it shows how the whole product is built and run: an Angular front end, an ASP.NET Core API on SQL Server, EF Core migrations that run as their own deploy step and are checked against the running API, Docker, CI on every pull request, a rehearsed deploy pipeline, and the decisions behind each of these, written down.
 
-> **Status:** changing course. This project started as Shiplog, a release tracker; [ADR 6](docs/adr/0006-from-release-tracking-to-event-ticketing.md) explains why it's becoming Doorlist. The rename is done, and the API for events, sign-up and signed tickets is in ([ADR 7](docs/adr/0007-signed-ticket-codes-and-claiming-without-overselling.md)). The web screens, door check-in and the release tracker's retirement come next. Until then, the web app below is still the release tracker.
+> **Status:** Doorlist's events, sign-up, claiming and tickets work end to end, API and web. Door check-in comes next, then the old release tracker is retired ([ADR 6](docs/adr/0006-from-release-tracking-to-event-ticketing.md)). This project started as Shiplog, a release tracker.
 
-## What it does today: the release tracker
+## What it does
 
-- **Apps and environments.** A lead adds each app the team ships, and its environments, each with the API URL a build for it must point at. Production environments are flagged.
-- **Releases with a checklist.** A release is one version of an app, for one platform, going to one environment. It starts with a checklist built from its environment: *"Build is configured for the production environment"*, *"Build points at https://api.example.com/"*, release notes, testing.
-- **A gate on shipping.** A release can ship only when every item is ticked. Developers ship to staging; only a lead ships to production. Who ticked what, and who shipped, is recorded.
-- **Roles.** Viewer (read only), Developer (works on releases), Lead (everything). There is no public sign-up.
+- **Events.** Organizers create an event as a draft, add ticket types with capacities, and publish it. Anyone can browse published events without an account.
+- **Sign-up.** Anyone can create an account, and it's always an attendee account. Organizers and door staff are set up by an operator.
+- **Claiming.** Attendees claim up to 4 tickets per event. However many people claim at once, an event never issues more than its capacity ([ADR 7](docs/adr/0007-signed-ticket-codes-and-claiming-without-overselling.md)).
+- **Tickets.** Each ticket is a QR code of a signed code. Door devices can check it with the public key, without a connection.
+- **Coming next: door check-in.** Staff scan tickets, offline if they need to; the first scan of a ticket wins.
+
+Until it's retired, the release tracker is still there for its own roles (Lead, Developer, Viewer): apps, environments, and releases with a checklist gate.
 
 ## Stack
 
@@ -83,7 +86,7 @@ docker-compose.yml       Local stack
 | 2. Domain and auth ✅ | The release tracker: apps, environments, releases, checklists; ASP.NET Core Identity + JWT with roles |
 | 3. Deploy pipeline (built, waiting for the server) | Images to GHCR; staging then production with approval; settings check, backup, migrations, health check and rollback; Content-Security-Policy |
 | 4. Expand/contract ✅ | A CI check that the running API survives each PR's migrations; a breaking schema change shipped in three steps that each pass it ([`docs/migrations.md`](docs/migrations.md)) |
-| 5. Doorlist | Rename ✅; events, ticket types, attendee sign-up, claiming without overselling and signed QR tickets: API ✅, web next; door check-in with offline sync; the release tracker retired in steps ([ADR 6](docs/adr/0006-from-release-tracking-to-event-ticketing.md), [ADR 7](docs/adr/0007-signed-ticket-codes-and-claiming-without-overselling.md)) |
+| 5. Doorlist | Rename ✅; events, ticket types, attendee sign-up, claiming without overselling and signed QR tickets ✅; door check-in with offline sync; the release tracker retired in steps ([ADR 6](docs/adr/0006-from-release-tracking-to-event-ticketing.md), [ADR 7](docs/adr/0007-signed-ticket-codes-and-claiming-without-overselling.md)) |
 | 6. Mobile | React Native (Expo) app: an attendee's tickets, and a door scanner that works offline |
 | 7. Polish | Live demo, screenshots, `v1.0.0` |
 
