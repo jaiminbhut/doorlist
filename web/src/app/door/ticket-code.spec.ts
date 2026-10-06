@@ -1,3 +1,4 @@
+import vectors from '../../../../test-vectors/ticket-codes.json';
 import { importSigningKey, verifyTicketCode } from './ticket-code';
 
 // Made by the API's C# TicketSigner, so these tests check that the browser
@@ -47,6 +48,24 @@ describe('verifyTicketCode', () => {
     'DL1.AZLD1F5veouc3vASNFZ4mgAAACo.c2hvcnQ',
   ])('rejects %j', async (code) => {
     const key = await importSigningKey(fromServer.publicKey);
+
+    expect(await verifyTicketCode(code, key)).toBeNull();
+  });
+});
+
+/**
+ * The same file the API's tests check with its own TicketSigner and the mobile
+ * app's tests check with noble (ADR 9). It includes a signature with a high s.
+ */
+describe('verifyTicketCode, on the shared test vectors', () => {
+  it.each(vectors.valid)('accepts $name', async ({ code, ticketId, eventId }) => {
+    const key = await importSigningKey(vectors.publicKey);
+
+    expect(await verifyTicketCode(code, key)).toEqual({ ticketId, eventId });
+  });
+
+  it.each(vectors.invalid)('rejects $name', async ({ code }) => {
+    const key = await importSigningKey(vectors.publicKey);
 
     expect(await verifyTicketCode(code, key)).toBeNull();
   });

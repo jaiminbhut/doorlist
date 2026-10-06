@@ -84,7 +84,8 @@ mobile/                  Expo app for attendees and door staff (in progress)
 docs/adr/                Architecture decision records
 deploy/                  Server setup, Caddy, compose files and the deploy script
 .github/workflows/       CI (build, tests, migration checks, schema compatibility, smoke and browser tests, mobile checks) and Deploy
-scripts/                 Schema compatibility check, browser tests, deploy rehearsal, GitHub deploy setup
+scripts/                 Schema compatibility check, browser tests, deploy rehearsal, GitHub deploy setup, ticket-code test vectors
+test-vectors/            Ticket codes made by the API's signer, checked by the API, web and mobile tests
 docker-compose.yml       Local stack
 ```
 

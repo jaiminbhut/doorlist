@@ -1,0 +1,60 @@
+{
+  "about": "Ticket codes made by the API's TicketSigner (ADR 7) and checked by the API, web and mobile tests (ADR 9). Made by scripts/make-ticket-code-vectors.cs. The private key exists for these vectors only.",
+  "privateKey": "MIGHAgEAMBMGByqGSM49AgEGCCqGSM49AwEHBG0wawIBAQQgmeXNAIM4xq9g2TY/gDRBeCopWGQHQSGOweqkdXGZrhChRANCAARjaIzfyb5ZQxyk6tVT5SP1GpVSLKw4WIg17S3MdHSisl+xqy392XmZiGC6DckymLT+V3emUGVT87v50qZJhm3p",
+  "publicKey": "MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAEY2iM38m+WUMcpOrVU+Uj9RqVUiysOFiINe0tzHR0orJfsast/dl5mYhgug3JMpi0/ld3plBlU/O7+dKmSYZt6Q==",
+  "keyId": "oDlAGykj4qo",
+  "valid": [
+    {
+      "name": "signature with a low s",
+      "code": "DL1.AZmzxF1uf4CRI0VniavN7wAAAAw.TXtVc_LdOX7cwfwmQ659uoELsKVEW89M_dl6OG-C-BgJvDE1CxAdWr5D8F3_lpFvjC2lMkaGWquK1Xk2CSkUgg",
+      "ticketId": "0199b3c4-5d6e-7f80-9123-456789abcdef",
+      "eventId": 12
+    },
+    {
+      "name": "the same ticket, signature with a high s",
+      "code": "DL1.AZmzxF1uf4CRI0VniavN7wAAAAw.TXtVc_LdOX7cwfwmQ659uoELsKVEW89M_dl6OG-C-Bj2Q87J9O_ipkG8D6IAaW6QMLlVe2CRQ9lo5FGM8zoQzw",
+      "ticketId": "0199b3c4-5d6e-7f80-9123-456789abcdef",
+      "eventId": 12
+    },
+    {
+      "name": "a ticket for another event",
+      "code": "DL1.AZmzxF1uf4CRI0VniavNAAAAAGM.CYkoodrY0v6Nw4dZ9v7m9uLWjsqd754YtVb9qfprcvQKF-LRwHWD_DQDOmkwA7zhX6zljfHmoY1YXI111OpHZQ",
+      "ticketId": "0199b3c4-5d6e-7f80-9123-456789abcd00",
+      "eventId": 99
+    }
+  ],
+  "invalid": [
+    {
+      "name": "another ticket under this signature",
+      "code": "DL1.AZmzxF1uf4CRI0VniavNAAAAAGM.TXtVc_LdOX7cwfwmQ659uoELsKVEW89M_dl6OG-C-BgJvDE1CxAdWr5D8F3_lpFvjC2lMkaGWquK1Xk2CSkUgg"
+    },
+    {
+      "name": "one bit of the signature changed",
+      "code": "DL1.AZmzxF1uf4CRI0VniavN7wAAAAw.TXtVc_LdOX7cwf0mQ659uoELsKVEW89M_dl6OG-C-BgJvDE1CxAdWr5D8F3_lpFvjC2lMkaGWquK1Xk2CSkUgg"
+    },
+    {
+      "name": "signed with another key",
+      "code": "DL1.AZmzxF1uf4CRI0VniavN7wAAAAw.OXuFclXfCnKNEgrBObLWhP26yHCqQxdeOCyBF3_OpxnmNxaDQHepWeVxrCoe-fkwBk5_xsyzL-pnOIdhA9orpQ"
+    },
+    {
+      "name": "unknown version",
+      "code": "DL2.AZmzxF1uf4CRI0VniavN7wAAAAw.TXtVc_LdOX7cwfwmQ659uoELsKVEW89M_dl6OG-C-BgJvDE1CxAdWr5D8F3_lpFvjC2lMkaGWquK1Xk2CSkUgg"
+    },
+    {
+      "name": "signature one byte short",
+      "code": "DL1.AZmzxF1uf4CRI0VniavN7wAAAAw.TXtVc_LdOX7cwfwmQ659uoELsKVEW89M_dl6OG-C-BgJvDE1CxAdWr5D8F3_lpFvjC2lMkaGWquK1Xk2CSkU"
+    },
+    {
+      "name": "standard base64, not base64url",
+      "code": "DL1.AZmzxF1uf4CRI0VniavN7wAAAAw.TXtVc/LdOX7cwfwmQ659uoELsKVEW89M/dl6OG+C+BgJvDE1CxAdWr5D8F3/lpFvjC2lMkaGWquK1Xk2CSkUgg=="
+    },
+    {
+      "name": "an extra part",
+      "code": "DL1.AZmzxF1uf4CRI0VniavN7wAAAAw.TXtVc_LdOX7cwfwmQ659uoELsKVEW89M_dl6OG-C-BgJvDE1CxAdWr5D8F3_lpFvjC2lMkaGWquK1Xk2CSkUgg.x"
+    },
+    {
+      "name": "empty",
+      "code": ""
+    }
+  ]
+}
