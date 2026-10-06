@@ -1,35 +1,35 @@
 # One environment (staging or production). The same file serves both: the
-# project name (shiplog-staging, shiplog-production) and app/.env make them
+# project name (doorlist-staging, doorlist-production) and app/.env make them
 # different. IMAGE_TAG is the commit being deployed. The migrate and seed
 # steps sit behind the "steps" profile, so `up` never starts them;
 # scripts/deploy.sh runs them once with `run --rm`.
 
 services:
   migrate:
-    image: ${IMAGE_REGISTRY}/shiplog-migrate:${IMAGE_TAG:?}
+    image: ${IMAGE_REGISTRY}/doorlist-migrate:${IMAGE_TAG:?}
     profiles: [steps]
     command: ["--connection", "${MIGRATOR_CONNECTION:?}"]
     networks: [data]
 
   seed:
-    image: ${IMAGE_REGISTRY}/shiplog-api:${IMAGE_TAG:?}
+    image: ${IMAGE_REGISTRY}/doorlist-api:${IMAGE_TAG:?}
     profiles: [steps]
     command: ["seed-demo-users"]
     environment:
-      ConnectionStrings__Shiplog: ${APP_CONNECTION:?}
+      ConnectionStrings__Doorlist: ${APP_CONNECTION:?}
       Demo__Password: ${DEMO_PASSWORD:-}
     networks: [data]
 
   api:
-    image: ${IMAGE_REGISTRY}/shiplog-api:${IMAGE_TAG:?}
+    image: ${IMAGE_REGISTRY}/doorlist-api:${IMAGE_TAG:?}
     restart: unless-stopped
     environment:
-      ConnectionStrings__Shiplog: ${APP_CONNECTION:?}
+      ConnectionStrings__Doorlist: ${APP_CONNECTION:?}
       Auth__Jwt__SigningKey: ${JWT_SIGNING_KEY:?}
     networks: [default, data]
 
   web:
-    image: ${IMAGE_REGISTRY}/shiplog-web:${IMAGE_TAG:?}
+    image: ${IMAGE_REGISTRY}/doorlist-web:${IMAGE_TAG:?}
     restart: unless-stopped
     depends_on: [api]
     networks:
@@ -40,8 +40,8 @@ services:
 
 networks:
   edge:
-    name: shiplog-edge
+    name: doorlist-edge
     external: true
   data:
-    name: shiplog-data
+    name: doorlist-data
     external: true

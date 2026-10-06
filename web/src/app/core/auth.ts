@@ -16,7 +16,7 @@ interface Session {
   user: SignedInUser;
 }
 
-const STORAGE_KEY = 'shiplog.session';
+const STORAGE_KEY = 'doorlist.session';
 
 /**
  * Holds the signed-in user and their short-lived access token (ADR 4). The

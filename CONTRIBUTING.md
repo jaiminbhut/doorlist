@@ -17,13 +17,13 @@ docker compose up --build      # SQL Server, migrations, demo users, API, web
 open http://localhost:8080      # web; the API is also on http://localhost:5080
 ```
 
-Sign in as `lead@example.com`, `developer@example.com` or `viewer@example.com`, password `Shiplog-demo-2026`.
+Sign in as `lead@example.com`, `developer@example.com` or `viewer@example.com`, password `Doorlist-demo-2026`.
 
 To run the API from your IDE instead, start the database and the one-shot steps, then `dotnet run`:
 
 ```sh
 docker compose up -d db migrate seed
-cd api && dotnet run --project src/Shiplog.Api
+cd api && dotnet run --project src/Doorlist.Api
 ```
 
 The Development settings hold a local JWT signing key and demo password; other environments must set `Auth__Jwt__SigningKey` and `Demo__Password` as secrets.
@@ -53,9 +53,9 @@ export TESTCONTAINERS_DOCKER_SOCKET_OVERRIDE=/var/run/docker.sock
 
 - Every schema change is an EF Core migration, committed with the code that needs it:
   ```sh
-  cd api && dotnet ef migrations add <Name> --project src/Shiplog.Api --output-dir Data/Migrations
+  cd api && dotnet ef migrations add <Name> --project src/Doorlist.Api --output-dir Data/Migrations
   ```
-- Read the SQL before you merge. CI attaches the idempotent script as the `migrations-sql` artifact, or run `dotnet ef migrations script --idempotent --project src/Shiplog.Api` locally.
+- Read the SQL before you merge. CI attaches the idempotent script as the `migrations-sql` artifact, or run `dotnet ef migrations script --idempotent --project src/Doorlist.Api` locally.
 - Never edit or delete a migration that is on `main`. Fix forward with a new one.
 - Breaking changes (rename, split, type change, drop) use expand/contract, so the API that is running during a deploy never meets a schema it can't read. See [docs/migrations.md](docs/migrations.md).
 - CI checks this on every pull request: it starts the API from `main`, runs the PR's migrations underneath it, and checks the API still reads and writes. Run it locally with `scripts/check-schema-compat.sh main`.

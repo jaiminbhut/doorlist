@@ -17,7 +17,7 @@ describe('App', () => {
   it('renders the product name in the header', async () => {
     const page = await render();
 
-    expect(page.querySelector('h1')?.textContent).toContain('Shiplog');
+    expect(page.querySelector('h1')?.textContent).toContain('Doorlist');
   });
 
   it('shows navigation and the role only when signed in', async () => {

@@ -5,7 +5,7 @@
 #
 #   deploy.sh <staging|production> <image-tag>
 #
-# It expects shared/.env and <environment>/.env under $SHIPLOG_ROOT, both
+# It expects shared/.env and <environment>/.env under $DOORLIST_ROOT, both
 # written by the workflow from GitHub secrets. Steps, in order:
 #
 #   1. Check the environment file is for this environment
@@ -25,10 +25,10 @@ set -euo pipefail
 
 environment=${1:?usage: deploy.sh <staging|production> <image-tag>}
 tag=${2:?usage: deploy.sh <staging|production> <image-tag>}
-root=${SHIPLOG_ROOT:-/opt/shiplog}
+root=${DOORLIST_ROOT:-/opt/doorlist}
 deploy_dir="$root/deploy"
 env_dir="$root/$environment"
-db_container=shiplog-shared-db-1
+db_container=doorlist-shared-db-1
 backups_to_keep=${BACKUPS_TO_KEEP:-10}
 
 step() { printf '\n==> %s\n' "$*"; }
@@ -39,9 +39,9 @@ case "$environment" in
   *) fail "unknown environment '$environment'" ;;
 esac
 
-shared() { docker compose --project-name shiplog-shared --env-file "$root/shared/.env" -f "$deploy_dir/shared/compose.yml" "$@"; }
+shared() { docker compose --project-name doorlist-shared --env-file "$root/shared/.env" -f "$deploy_dir/shared/compose.yml" "$@"; }
 app() {
-  IMAGE_TAG="$1" docker compose --project-name "shiplog-$environment" --env-file "$env_dir/.env" \
+  IMAGE_TAG="$1" docker compose --project-name "doorlist-$environment" --env-file "$env_dir/.env" \
     -f "$deploy_dir/app/compose.yml" "${@:2}"
 }
 sql() { docker exec -i "$db_container" sh -c 'SQLCMDPASSWORD="$MSSQL_SA_PASSWORD" /opt/mssql-tools18/bin/sqlcmd -C -S localhost -U sa -b -h -1 -W'; }
@@ -57,8 +57,8 @@ database=$(env_value DB_NAME)
 public_host=$(env_value PUBLIC_HOST)
 [[ "$declared" == "$environment" ]] ||
   fail "the environment file says ENVIRONMENT=$declared, but this is a $environment deploy"
-[[ "$database" == "Shiplog_$environment" ]] ||
-  fail "the environment file says DB_NAME=$database, expected Shiplog_$environment"
+[[ "$database" == "Doorlist_$environment" ]] ||
+  fail "the environment file says DB_NAME=$database, expected Doorlist_$environment"
 if [[ "$environment" == production && "$public_host" == *staging* ]]; then
   fail "a production deploy is pointed at $public_host"
 fi
@@ -75,8 +75,8 @@ shared up -d --wait --quiet-pull
 # --- 3. Database and logins ----------------------------------------------------
 step "3/8 Database and logins for $database"
 escape() { printf '%s' "${1//\'/\'\'}"; }
-migrator="shiplog_${environment}_migrator"
-app_login="shiplog_${environment}_app"
+migrator="doorlist_${environment}_migrator"
+app_login="doorlist_${environment}_app"
 sql >/dev/null <<SQL
 SET NOCOUNT ON;
 IF DB_ID(N'$database') IS NULL CREATE DATABASE [$database];

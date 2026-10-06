@@ -1,4 +1,4 @@
-# Shiplog web
+# Doorlist web
 
 The Angular front end. See the [root README](../README.md) for the whole project.
 

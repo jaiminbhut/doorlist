@@ -3,7 +3,7 @@
 # Rehearses a real deploy on this machine: builds the images, then runs
 # deploy/scripts/deploy.sh for staging and production against local Docker,
 # exactly as the deploy workflow runs it on the server. Caddy serves
-# https://shiplog-staging.localhost and https://shiplog.localhost with local
+# https://doorlist-staging.localhost and https://doorlist.localhost with local
 # certificates. Then it checks the safety rails:
 #
 #   - a production deploy with a staging settings file is refused
@@ -23,24 +23,24 @@ set -euo pipefail
 
 repo=$(git rev-parse --show-toplevel)
 root="$repo/.local/deploy-rehearsal"
-registry=shiplog-rehearsal
+registry=doorlist-rehearsal
 good=$(git -C "$repo" rev-parse --short=12 HEAD)-rehearsal
 fails_early="broken-step-rehearsal"
 fails_serving="broken-start-rehearsal"
-db=shiplog-shared-db-1
+db=doorlist-shared-db-1
 
 step() { printf '\n######## %s\n' "$*"; }
 fail() { echo "REHEARSAL FAILED: $*" >&2; exit 1; }
 secret() { printf 'Sh1-%s' "$(openssl rand -hex 16)"; }
-deploy() { SHIPLOG_ROOT="$root" SKIP_PULL=1 "$root/deploy/scripts/deploy.sh" "$@"; }
+deploy() { DOORLIST_ROOT="$root" SKIP_PULL=1 "$root/deploy/scripts/deploy.sh" "$@"; }
 
 cleanup() {
   # IMAGE_TAG has to be set for compose to read app/compose.yml at all, even for `down`.
-  for project in shiplog-production shiplog-staging; do
-    IMAGE_TAG=cleanup docker compose --project-name "$project" --env-file "$root/${project#shiplog-}/.env" \
+  for project in doorlist-production doorlist-staging; do
+    IMAGE_TAG=cleanup docker compose --project-name "$project" --env-file "$root/${project#doorlist-}/.env" \
       -f "$root/deploy/app/compose.yml" --profile steps down --volumes --remove-orphans >/dev/null 2>&1 || true
   done
-  docker compose --project-name shiplog-shared --env-file "$root/shared/.env" \
+  docker compose --project-name doorlist-shared --env-file "$root/shared/.env" \
     -f "$root/deploy/shared/compose.yml" down --volumes --remove-orphans >/dev/null 2>&1 || true
   docker images --format '{{.Repository}}:{{.Tag}}' | grep "^$registry/" | xargs -r docker rmi >/dev/null 2>&1 || true
   rm -rf "$root"
@@ -54,20 +54,20 @@ if [[ -d "$root" ]]; then
 fi
 
 step "Building images ($good)"
-docker build --quiet --target api -t "$registry/shiplog-api:$good" "$repo/api" >/dev/null
-docker build --quiet --target migrate -t "$registry/shiplog-migrate:$good" "$repo/api" >/dev/null
-docker build --quiet -t "$registry/shiplog-web:$good" "$repo/web" >/dev/null
+docker build --quiet --target api -t "$registry/doorlist-api:$good" "$repo/api" >/dev/null
+docker build --quiet --target migrate -t "$registry/doorlist-migrate:$good" "$repo/api" >/dev/null
+docker build --quiet -t "$registry/doorlist-web:$good" "$repo/web" >/dev/null
 # Two broken releases. One fails in the seed step, before any container is
 # swapped. The other seeds fine but crashes when it starts serving, which
 # only the health check can catch.
-printf 'FROM %s\nENTRYPOINT ["sh", "-c", "echo broken on purpose >&2; exit 1"]\n' "$registry/shiplog-api:$good" |
-  docker build --quiet -t "$registry/shiplog-api:$fails_early" - >/dev/null
+printf 'FROM %s\nENTRYPOINT ["sh", "-c", "echo broken on purpose >&2; exit 1"]\n' "$registry/doorlist-api:$good" |
+  docker build --quiet -t "$registry/doorlist-api:$fails_early" - >/dev/null
 # shellcheck disable=SC2016 # $1 and $@ belong to the image's shell, not this one
-printf 'FROM %s\nENTRYPOINT ["sh", "-c", "if [ \\"$1\\" = seed-demo-users ]; then exec dotnet Shiplog.Api.dll \\"$@\\"; fi; echo crashes when serving >&2; exit 1", "--"]\n' \
-  "$registry/shiplog-api:$good" | docker build --quiet -t "$registry/shiplog-api:$fails_serving" - >/dev/null
+printf 'FROM %s\nENTRYPOINT ["sh", "-c", "if [ \\"$1\\" = seed-demo-users ]; then exec dotnet Doorlist.Api.dll \\"$@\\"; fi; echo crashes when serving >&2; exit 1", "--"]\n' \
+  "$registry/doorlist-api:$good" | docker build --quiet -t "$registry/doorlist-api:$fails_serving" - >/dev/null
 for tag in "$fails_early" "$fails_serving"; do
-  docker tag "$registry/shiplog-migrate:$good" "$registry/shiplog-migrate:$tag"
-  docker tag "$registry/shiplog-web:$good" "$registry/shiplog-web:$tag"
+  docker tag "$registry/doorlist-migrate:$good" "$registry/doorlist-migrate:$tag"
+  docker tag "$registry/doorlist-web:$good" "$registry/doorlist-web:$tag"
 done
 
 step "Writing settings, as the workflow does from GitHub secrets"
@@ -75,25 +75,25 @@ rm -rf "$root" && mkdir -p "$root/shared" "$root/staging" "$root/production"
 cp -R "$repo/deploy" "$root/deploy"
 cat >"$root/shared/.env" <<SETTINGS
 ACME_EMAIL=rehearsal@example.com
-PRODUCTION_HOST=shiplog.localhost
-STAGING_HOST=shiplog-staging.localhost
+PRODUCTION_HOST=doorlist.localhost
+STAGING_HOST=doorlist-staging.localhost
 CADDY_LOCAL_CERTS=local_certs
 MSSQL_SA_PASSWORD=$(secret)
 MSSQL_MEMORY_LIMIT_MB=1024
 SETTINGS
 demo_password=$(secret)
 for environment in staging production; do
-  host=$([[ $environment == production ]] && echo shiplog.localhost || echo shiplog-staging.localhost)
+  host=$([[ $environment == production ]] && echo doorlist.localhost || echo doorlist-staging.localhost)
   migrator=$(secret) app_password=$(secret)
   cat >"$root/$environment/.env" <<SETTINGS
 ENVIRONMENT=$environment
-DB_NAME=Shiplog_$environment
+DB_NAME=Doorlist_$environment
 PUBLIC_HOST=$host
 IMAGE_REGISTRY=$registry
 DB_MIGRATOR_PASSWORD=$migrator
 DB_APP_PASSWORD=$app_password
-MIGRATOR_CONNECTION=Server=db;Database=Shiplog_$environment;User Id=shiplog_${environment}_migrator;Password=$migrator;TrustServerCertificate=True
-APP_CONNECTION=Server=db;Database=Shiplog_$environment;User Id=shiplog_${environment}_app;Password=$app_password;TrustServerCertificate=True
+MIGRATOR_CONNECTION=Server=db;Database=Doorlist_$environment;User Id=doorlist_${environment}_migrator;Password=$migrator;TrustServerCertificate=True
+APP_CONNECTION=Server=db;Database=Doorlist_$environment;User Id=doorlist_${environment}_app;Password=$app_password;TrustServerCertificate=True
 JWT_SIGNING_KEY=$(openssl rand -hex 32)
 DEMO_PASSWORD=$demo_password
 SETTINGS
@@ -107,18 +107,18 @@ deploy production "$good"
 https() { curl --silent --show-error --insecure "$@"; }
 
 step "Check: both environments answer over HTTPS through Caddy"
-for host in shiplog-staging.localhost shiplog.localhost; do
+for host in doorlist-staging.localhost doorlist.localhost; do
   [[ $(https "https://$host/api/health") == Healthy ]] || fail "$host is not healthy"
   headers=$(https --head "https://$host/")
   grep -qi '^strict-transport-security' <<<"$headers" || fail "$host has no HSTS header"
   grep -qi "^content-security-policy: default-src 'self'; script-src 'self'" <<<"$headers" || fail "$host has no CSP"
   echo "   https://$host: healthy, HSTS and CSP present"
 done
-grep -qi '^x-robots-tag: noindex' <<<"$(https --head https://shiplog-staging.localhost/)" || fail "staging is indexable"
+grep -qi '^x-robots-tag: noindex' <<<"$(https --head https://doorlist-staging.localhost/)" || fail "staging is indexable"
 echo "   staging is marked noindex"
 
 step "Check: write data in production"
-api=https://shiplog.localhost/api
+api=https://doorlist.localhost/api
 token=$(https -H 'Content-Type: application/json' \
   -d "{\"email\":\"lead@example.com\",\"password\":\"$demo_password\"}" "$api/auth/login" | jq -r .accessToken)
 [[ -n "$token" && "$token" != null ]] || fail "could not sign in to production"
@@ -169,7 +169,7 @@ step "Check: the API's login can read and write data but not change the schema"
 app_password=$(sed -n 's/^DB_APP_PASSWORD=//p' "$root/production/.env")
 as_app() {
   docker exec -e SQLCMDPASSWORD="$app_password" "$db" \
-    /opt/mssql-tools18/bin/sqlcmd -C -S localhost -U shiplog_production_app -d Shiplog_production -b -h -1 -W -Q "$1"
+    /opt/mssql-tools18/bin/sqlcmd -C -S localhost -U doorlist_production_app -d Doorlist_production -b -h -1 -W -Q "$1"
 }
 as_app "SELECT COUNT(*) FROM Apps" >/dev/null || fail "the app login can't read"
 if as_app "CREATE TABLE RehearsalProbe (Id int)" >/dev/null 2>&1; then
@@ -179,7 +179,7 @@ echo "   SELECT works, CREATE TABLE is denied"
 
 printf '\nREHEARSAL PASSED\n'
 if [[ "${KEEP:-}" == 1 ]]; then
-  echo "Still running: https://shiplog.localhost and https://shiplog-staging.localhost (accept the local certificate)."
+  echo "Still running: https://doorlist.localhost and https://doorlist-staging.localhost (accept the local certificate)."
   echo "Sign in as lead@example.com with password $demo_password."
   echo "To remove it, run this script again without KEEP=1 (it starts by cleaning up), then let it finish."
 fi

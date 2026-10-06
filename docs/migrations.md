@@ -1,6 +1,6 @@
 # Changing the schema without downtime
 
-Shiplog's deploy order is fixed ([ADR 3](adr/0003-run-migrations-as-a-separate-step.md)): the migration bundle runs first, then the new API starts. So for a while, **the previous API version runs against the new schema**. On a single server that's the seconds between the migration and the container swap. With more than one instance, or a rollback, it's longer.
+Doorlist's deploy order is fixed ([ADR 3](adr/0003-run-migrations-as-a-separate-step.md)): the migration bundle runs first, then the new API starts. So for a while, **the previous API version runs against the new schema**. On a single server that's the seconds between the migration and the container swap. With more than one instance, or a rollback, it's longer.
 
 Every migration therefore has one rule:
 
@@ -107,8 +107,8 @@ The parser for the old `"2.4.0 (118)"` form isn't needed by the API any more. It
 
 | PR | Step | Previous API on the new schema |
 |---|---|---|
-| [#3](https://github.com/jaiminbhut/shiplog/pull/3) | Expand: add, backfill, dual-write, make `Version` nullable | The pre-split API keeps working |
-| [#4](https://github.com/jaiminbhut/shiplog/pull/4) | Switch: stop mapping `Version`, keep the column, move the unique index | The step 1 API keeps working |
-| [#5](https://github.com/jaiminbhut/shiplog/pull/5) | Contract: drop `Version` | The step 2 API keeps working |
+| [#3](https://github.com/jaiminbhut/doorlist/pull/3) | Expand: add, backfill, dual-write, make `Version` nullable | The pre-split API keeps working |
+| [#4](https://github.com/jaiminbhut/doorlist/pull/4) | Switch: stop mapping `Version`, keep the column, move the unique index | The step 1 API keeps working |
+| [#5](https://github.com/jaiminbhut/doorlist/pull/5) | Contract: drop `Version` | The step 2 API keeps working |
 
 One lesson is in the history. Step 1 first shipped without making `Version` nullable. Planning step 2 showed the problem: once step 2 stopped writing the column, the step 1 API would break on step 2's rows, whether running side by side or after a rollback. The fix went into step 1 before it merged. That's what the second commit on #3 is.

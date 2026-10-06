@@ -15,6 +15,7 @@ concurrency:
 jobs:
   api:
     name: API build, tests and migration checks
+    timeout-minutes: 20
     runs-on: ubuntu-latest
     defaults:
       run:
@@ -38,10 +39,10 @@ jobs:
       - run: dotnet test --no-build --configuration Release
 
       - name: Fail if the model has changes with no migration
-        run: dotnet ef migrations has-pending-model-changes --project src/Shiplog.Api --configuration Release --no-build
+        run: dotnet ef migrations has-pending-model-changes --project src/Doorlist.Api --configuration Release --no-build
 
       - name: Generate the idempotent migration script for review
-        run: dotnet ef migrations script --idempotent --project src/Shiplog.Api --configuration Release --no-build --output ../artifacts/migrations.sql
+        run: dotnet ef migrations script --idempotent --project src/Doorlist.Api --configuration Release --no-build --output ../artifacts/migrations.sql
 
       - uses: actions/upload-artifact@v4
         with:
@@ -50,6 +51,7 @@ jobs:
 
   web:
     name: Web lint, tests and build
+    timeout-minutes: 15
     runs-on: ubuntu-latest
     defaults:
       run:
@@ -71,6 +73,7 @@ jobs:
 
   schema-compat:
     name: Running API survives this PR's migrations
+    timeout-minutes: 20
     # Only pull requests have a "running version" to compare with: main.
     if: github.event_name == 'pull_request'
     needs: [api]
@@ -85,6 +88,7 @@ jobs:
 
   compose:
     name: Full stack smoke test
+    timeout-minutes: 20
     needs: [api, web]
     runs-on: ubuntu-latest
     steps:
@@ -108,7 +112,7 @@ jobs:
         run: |
           base=http://localhost:8080/api
           token=$(curl --fail --silent -H "Content-Type: application/json" \
-            -d '{"email":"lead@example.com","password":"Shiplog-demo-2026"}' "$base/auth/login" | jq -r .accessToken)
+            -d '{"email":"lead@example.com","password":"Doorlist-demo-2026"}' "$base/auth/login" | jq -r .accessToken)
           test "$(curl --silent --output /dev/null --write-out '%{http_code}' "$base/apps")" = 401
           curl --fail --silent -H "Authorization: Bearer $token" -H "Content-Type: application/json" \
             -d '{"name":"CI smoke"}' "$base/apps"

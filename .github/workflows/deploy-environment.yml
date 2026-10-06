@@ -24,6 +24,7 @@ permissions:
 jobs:
   deploy:
     name: Deploy to ${{ inputs.environment }}
+    timeout-minutes: 30
     runs-on: ubuntu-latest
     environment:
       name: ${{ inputs.environment }}
@@ -47,7 +48,7 @@ jobs:
         run: |
           umask 077
           mkdir -p "$RUNNER_TEMP/settings"
-          database="Shiplog_${ENVIRONMENT}"
+          database="Doorlist_${ENVIRONMENT}"
           cat > "$RUNNER_TEMP/settings/shared.env" <<SETTINGS
           ACME_EMAIL=${{ vars.ACME_EMAIL }}
           PRODUCTION_HOST=${{ vars.PRODUCTION_HOST }}
@@ -62,8 +63,8 @@ jobs:
           IMAGE_REGISTRY=ghcr.io/${{ github.repository_owner }}
           DB_MIGRATOR_PASSWORD=${DB_MIGRATOR_PASSWORD}
           DB_APP_PASSWORD=${DB_APP_PASSWORD}
-          MIGRATOR_CONNECTION=Server=db;Database=${database};User Id=shiplog_${ENVIRONMENT}_migrator;Password=${DB_MIGRATOR_PASSWORD};TrustServerCertificate=True
-          APP_CONNECTION=Server=db;Database=${database};User Id=shiplog_${ENVIRONMENT}_app;Password=${DB_APP_PASSWORD};TrustServerCertificate=True
+          MIGRATOR_CONNECTION=Server=db;Database=${database};User Id=doorlist_${ENVIRONMENT}_migrator;Password=${DB_MIGRATOR_PASSWORD};TrustServerCertificate=True
+          APP_CONNECTION=Server=db;Database=${database};User Id=doorlist_${ENVIRONMENT}_app;Password=${DB_APP_PASSWORD};TrustServerCertificate=True
           JWT_SIGNING_KEY=${JWT_SIGNING_KEY}
           DEMO_PASSWORD=${DEMO_PASSWORD}
           SETTINGS
@@ -89,11 +90,11 @@ jobs:
       - name: Copy deploy files and settings to the server
         run: |
           # shellcheck disable=SC2029 # expanded on the runner, on purpose
-          ssh server "mkdir -p /opt/shiplog/deploy /opt/shiplog/shared /opt/shiplog/${ENVIRONMENT}"
-          rsync -a --delete deploy/ server:/opt/shiplog/deploy/
-          ssh server "umask 077 && cat > /opt/shiplog/shared/.env" < "$RUNNER_TEMP/settings/shared.env"
+          ssh server "mkdir -p /opt/doorlist/deploy /opt/doorlist/shared /opt/doorlist/${ENVIRONMENT}"
+          rsync -a --delete deploy/ server:/opt/doorlist/deploy/
+          ssh server "umask 077 && cat > /opt/doorlist/shared/.env" < "$RUNNER_TEMP/settings/shared.env"
           # shellcheck disable=SC2029 # expanded on the runner, on purpose
-          ssh server "umask 077 && cat > /opt/shiplog/${ENVIRONMENT}/.env" < "$RUNNER_TEMP/settings/app.env"
+          ssh server "umask 077 && cat > /opt/doorlist/${ENVIRONMENT}/.env" < "$RUNNER_TEMP/settings/app.env"
 
       - name: Deploy ${{ inputs.tag }}
         env:
@@ -103,7 +104,7 @@ jobs:
           printf '%s' "$GHCR_TOKEN" | ssh server "docker login ghcr.io -u ${{ github.actor }} --password-stdin" >/dev/null
           status=0
           # shellcheck disable=SC2029 # expanded on the runner, on purpose
-          ssh server "/opt/shiplog/deploy/scripts/deploy.sh ${ENVIRONMENT} ${TAG}" || status=$?
+          ssh server "/opt/doorlist/deploy/scripts/deploy.sh ${ENVIRONMENT} ${TAG}" || status=$?
           ssh server "docker logout ghcr.io" >/dev/null || true
           exit "$status"
 

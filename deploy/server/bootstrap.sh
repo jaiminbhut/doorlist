@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 #
-# One-time setup of a fresh Ubuntu 24.04 server for Shiplog. Run it as the
+# One-time setup of a fresh Ubuntu 24.04 server for Doorlist. Run it as the
 # server's default `ubuntu` user (it uses sudo), with the public half of the
 # deploy key that GitHub Actions will use:
 #
@@ -43,8 +43,8 @@ if (( memory_mb < 3500 )) && [[ ! -f /swapfile ]]; then
   sudo mkswap /swapfile >/dev/null
   sudo swapon /swapfile
   echo '/swapfile none swap sw 0 0' | sudo tee -a /etc/fstab >/dev/null
-  echo 'vm.swappiness=10' | sudo tee /etc/sysctl.d/90-shiplog-swap.conf >/dev/null
-  sudo sysctl -q -p /etc/sysctl.d/90-shiplog-swap.conf
+  echo 'vm.swappiness=10' | sudo tee /etc/sysctl.d/90-doorlist-swap.conf >/dev/null
+  sudo sysctl -q -p /etc/sysctl.d/90-doorlist-swap.conf
   echo "   2 GB swap added (${memory_mb} MB of RAM)"
 else
   echo "   not needed, or already there (${memory_mb} MB of RAM)"
@@ -66,21 +66,21 @@ printf 'APT::Periodic::Update-Package-Lists "1";\nAPT::Periodic::Unattended-Upgr
 
 echo "==> SSH: keys only, no root login"
 printf 'PasswordAuthentication no\nKbdInteractiveAuthentication no\nPermitRootLogin no\n' |
-  sudo tee /etc/ssh/sshd_config.d/90-shiplog.conf >/dev/null
+  sudo tee /etc/ssh/sshd_config.d/90-doorlist.conf >/dev/null
 sudo sshd -t
 sudo systemctl reload ssh 2>/dev/null || sudo systemctl restart ssh
 sudo systemctl enable --now fail2ban >/dev/null
 
 echo "==> The deploy user"
 if ! id deploy >/dev/null 2>&1; then
-  sudo adduser --disabled-password --gecos "Shiplog deploys" deploy >/dev/null
+  sudo adduser --disabled-password --gecos "Doorlist deploys" deploy >/dev/null
 fi
 sudo usermod -aG docker deploy
 sudo install -d -m 700 -o deploy -g deploy /home/deploy/.ssh
 printf '%s\n' "$deploy_key" | sudo tee /home/deploy/.ssh/authorized_keys >/dev/null
 sudo chown deploy:deploy /home/deploy/.ssh/authorized_keys
 sudo chmod 600 /home/deploy/.ssh/authorized_keys
-sudo install -d -m 750 -o deploy -g deploy /opt/shiplog
+sudo install -d -m 750 -o deploy -g deploy /opt/doorlist
 
 echo
 echo "Done. Docker $(docker --version | awk '{ print $3 }' | tr -d ,), $(docker compose version --short) compose, ${memory_mb} MB RAM."
