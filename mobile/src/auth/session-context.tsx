@@ -7,6 +7,7 @@ import {
   useState,
   type PropsWithChildren,
 } from 'react';
+import { forgetTickets } from '@/tickets/ticket-cache';
 import { signInRequest, signUpRequest } from './auth-api';
 import { loadSession, saveSession, type Session } from './session';
 
@@ -16,6 +17,9 @@ interface SessionState {
   session: Session | null;
   signIn(email: string, password: string): Promise<void>;
   signUp(displayName: string, email: string, password: string): Promise<void>;
+  /** A fresh token for the same person, after theirs expired. Nothing on the phone is lost. */
+  signInAgain(password: string): Promise<void>;
+  /** Forgets the session and the cached tickets (ADR 9). */
   signOut(): Promise<void>;
 }
 
@@ -46,8 +50,14 @@ export function SessionProvider({ children }: PropsWithChildren) {
       signIn: async (email, password) => start(await signInRequest(email, password)),
       signUp: async (displayName, email, password) =>
         start(await signUpRequest(displayName, email, password)),
+      signInAgain: async (password) => {
+        if (session) {
+          await start(await signInRequest(session.user.email, password));
+        }
+      },
       signOut: async () => {
         await saveSession(null);
+        await forgetTickets().catch(() => undefined);
         setSession(null);
       },
     }),

@@ -1,8 +1,8 @@
 import * as SecureStore from 'expo-secure-store';
 import { Alert } from 'react-native';
-import { fireEvent, renderRouter, screen } from 'expo-router/testing-library';
+import { fireEvent, screen } from 'expo-router/testing-library';
 import { ApiError, request } from '@/api/client';
-import type { Session } from '@/auth/session';
+import { openApp, resetSecureStore, sessionFor } from '@/testing/app';
 
 jest.mock('@/api/client', () => ({
   ...jest.requireActual('@/api/client'),
@@ -10,33 +10,11 @@ jest.mock('@/api/client', () => ({
 }));
 
 const requestMock = jest.mocked(request);
-const store = SecureStore as typeof SecureStore & { __reset(): void };
-
-function sessionFor(roles: Session['user']['roles']): Session {
-  return {
-    accessToken: 'jwt',
-    expiresAt: '2099-01-01T00:00:00Z',
-    user: { email: 'someone@example.com', displayName: 'Someone', roles },
-  };
-}
-
-/**
- * Renders the real routes in src/app. renderRouter returns the render promise
- * with the router's helpers attached.
- */
-async function openApp(stored: Session | null, initialUrl = '/') {
-  if (stored) {
-    await SecureStore.setItemAsync('doorlist.session', JSON.stringify(stored));
-  }
-  const app = renderRouter('./src/app', { initialUrl });
-  await app;
-  // Not `return app`: an async function would unwrap the promise and drop the helpers.
-  return { pathname: () => app.getPathname() };
-}
-
 beforeEach(() => {
-  store.__reset();
+  resetSecureStore();
   requestMock.mockReset();
+  // Attendees' tickets load on their home screen.
+  requestMock.mockImplementation(async (path) => (path === '/api/tickets/mine' ? [] : undefined));
 });
 
 describe('where the app opens (ADR 9)', () => {
