@@ -44,6 +44,7 @@ jobs:
           DB_MIGRATOR_PASSWORD: ${{ secrets.DB_MIGRATOR_PASSWORD }}
           DB_APP_PASSWORD: ${{ secrets.DB_APP_PASSWORD }}
           JWT_SIGNING_KEY: ${{ secrets.JWT_SIGNING_KEY }}
+          TICKETS_SIGNING_KEY: ${{ secrets.TICKETS_SIGNING_KEY }}
           DEMO_PASSWORD: ${{ secrets.DEMO_PASSWORD }}
         run: |
           umask 077
@@ -66,6 +67,7 @@ jobs:
           MIGRATOR_CONNECTION=Server=db;Database=${database};User Id=doorlist_${ENVIRONMENT}_migrator;Password=${DB_MIGRATOR_PASSWORD};TrustServerCertificate=True
           APP_CONNECTION=Server=db;Database=${database};User Id=doorlist_${ENVIRONMENT}_app;Password=${DB_APP_PASSWORD};TrustServerCertificate=True
           JWT_SIGNING_KEY=${JWT_SIGNING_KEY}
+          TICKETS_SIGNING_KEY=${TICKETS_SIGNING_KEY}
           DEMO_PASSWORD=${DEMO_PASSWORD}
           SETTINGS
 

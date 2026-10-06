@@ -95,6 +95,7 @@ DB_APP_PASSWORD=$app_password
 MIGRATOR_CONNECTION=Server=db;Database=Doorlist_$environment;User Id=doorlist_${environment}_migrator;Password=$migrator;TrustServerCertificate=True
 APP_CONNECTION=Server=db;Database=Doorlist_$environment;User Id=doorlist_${environment}_app;Password=$app_password;TrustServerCertificate=True
 JWT_SIGNING_KEY=$(openssl rand -hex 32)
+TICKETS_SIGNING_KEY=$(openssl genpkey -algorithm EC -pkeyopt ec_paramgen_curve:P-256 | openssl pkcs8 -topk8 -nocrypt -outform DER | base64 | tr -d '\n')
 DEMO_PASSWORD=$demo_password
 SETTINGS
 done

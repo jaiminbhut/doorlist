@@ -4,7 +4,7 @@ Free event tickets with door check-in. Organizers create events with ticket type
 
 Doorlist is also a public reference project. Alongside the features, it shows how the whole product is built and run: an Angular front end, an ASP.NET Core API on SQL Server, EF Core migrations that run as their own deploy step and are checked against the running API, Docker, CI on every pull request, a rehearsed deploy pipeline, and the decisions behind each of these, written down.
 
-> **Status:** changing course. This project started as Shiplog, a release tracker; [ADR 6](docs/adr/0006-from-release-tracking-to-event-ticketing.md) explains why it's becoming Doorlist. The rename is done; the events and tickets come next, and the release tracker is retired in steps afterwards. Until then, the app below is still the release tracker.
+> **Status:** changing course. This project started as Shiplog, a release tracker; [ADR 6](docs/adr/0006-from-release-tracking-to-event-ticketing.md) explains why it's becoming Doorlist. The rename is done, and the API for events, sign-up and signed tickets is in ([ADR 7](docs/adr/0007-signed-ticket-codes-and-claiming-without-overselling.md)). The web screens, door check-in and the release tracker's retirement come next. Until then, the web app below is still the release tracker.
 
 ## What it does today: the release tracker
 
@@ -20,7 +20,8 @@ Doorlist is also a public reference project. Alongside the features, it shows ho
 | Web | Angular (standalone components, signals), served by nginx |
 | API | ASP.NET Core on .NET 10, minimal APIs, ProblemDetails, health checks |
 | Data | SQL Server, EF Core code-first migrations ([ADR 2](docs/adr/0002-sql-server-with-ef-core-code-first.md)) |
-| Auth | ASP.NET Core Identity, short-lived JWTs, role policies ([ADR 4](docs/adr/0004-authentication-with-identity-and-jwt.md)) |
+| Auth | ASP.NET Core Identity, short-lived JWTs, role policies, attendee sign-up with rate limits ([ADR 4](docs/adr/0004-authentication-with-identity-and-jwt.md), [ADR 6](docs/adr/0006-from-release-tracking-to-event-ticketing.md)) |
+| Tickets | Claims that can't oversell (atomic reservation, per-attendee lock, check constraint); ECDSA-signed QR codes checkable offline ([ADR 7](docs/adr/0007-signed-ticket-codes-and-claiming-without-overselling.md)) |
 | Migrations | EF Core migration bundle, run as a separate step before the API starts ([ADR 3](docs/adr/0003-run-migrations-as-a-separate-step.md)); every PR checked against the running API version, breaking changes in expand/contract steps ([docs/migrations.md](docs/migrations.md)) |
 | Tests | xUnit integration tests against a real SQL Server (Testcontainers) |
 | Delivery | Docker multi-stage images, GHCR, GitHub Actions; staging then production (with approval) on one server behind Caddy ([ADR 5](docs/adr/0005-single-server-deploy-with-docker-compose.md), [deploy/](deploy/README.md)) |
@@ -49,10 +50,13 @@ docker compose up --build
 - Web: http://localhost:8080
 - API: http://localhost:5080. `/api/health` is open; everything else needs a token from `POST /api/auth/login`.
 
-Local demo accounts, all with the password `Doorlist-demo-2026`:
+Local demo accounts, all with the password `Doorlist-demo-2026`. Anyone can also sign up as an attendee.
 
 | Email | Role |
 |---|---|
+| `organizer@example.com` | Organizer: creates and publishes events |
+| `door@example.com` | DoorStaff: checks tickets at the door |
+| `attendee@example.com` | Attendee: claims tickets |
 | `lead@example.com` | Lead |
 | `developer@example.com` | Developer |
 | `viewer@example.com` | Viewer |
@@ -79,7 +83,7 @@ docker-compose.yml       Local stack
 | 2. Domain and auth ✅ | The release tracker: apps, environments, releases, checklists; ASP.NET Core Identity + JWT with roles |
 | 3. Deploy pipeline (built, waiting for the server) | Images to GHCR; staging then production with approval; settings check, backup, migrations, health check and rollback; Content-Security-Policy |
 | 4. Expand/contract ✅ | A CI check that the running API survives each PR's migrations; a breaking schema change shipped in three steps that each pass it ([`docs/migrations.md`](docs/migrations.md)) |
-| 5. Doorlist | Rename ✅; events, ticket types and attendee sign-up; claiming tickets without overselling; signed QR tickets; door check-in with offline sync; the release tracker retired in steps ([ADR 6](docs/adr/0006-from-release-tracking-to-event-ticketing.md)) |
+| 5. Doorlist | Rename ✅; events, ticket types, attendee sign-up, claiming without overselling and signed QR tickets: API ✅, web next; door check-in with offline sync; the release tracker retired in steps ([ADR 6](docs/adr/0006-from-release-tracking-to-event-ticketing.md), [ADR 7](docs/adr/0007-signed-ticket-codes-and-claiming-without-overselling.md)) |
 | 6. Mobile | React Native (Expo) app: an attendee's tickets, and a door scanner that works offline |
 | 7. Polish | Live demo, screenshots, `v1.0.0` |
 

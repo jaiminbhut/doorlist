@@ -9,6 +9,8 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Doorlist.Api.Auth;
 using Doorlist.Api.Data;
+using Doorlist.Api.Events;
+using Doorlist.Api.Tickets;
 using Testcontainers.MsSql;
 
 namespace Doorlist.Api.Tests;
@@ -22,6 +24,8 @@ namespace Doorlist.Api.Tests;
 public sealed class DoorlistApiFactory : WebApplicationFactory<Program>, IAsyncLifetime
 {
     public const string DemoPassword = "Doorlist-test-password-1";
+
+    public static string TicketSigningKey { get; } = TicketSigner.GenerateKey();
 
     public static JsonSerializerOptions Json { get; } = new(JsonSerializerDefaults.Web)
     {
@@ -40,6 +44,9 @@ public sealed class DoorlistApiFactory : WebApplicationFactory<Program>, IAsyncL
     {
         builder.UseSetting("ConnectionStrings:Doorlist", _database.GetConnectionString());
         builder.UseSetting("Auth:Jwt:SigningKey", "test-signing-key-that-is-long-enough-for-hs256");
+        builder.UseSetting("Tickets:SigningKey", TicketSigningKey);
+        // Tests sign up many attendees from one address; RateLimitTests checks the limit itself.
+        builder.UseSetting("RateLimits:AuthPerMinute", "100000");
     }
 
     public async Task InitializeAsync()
@@ -70,6 +77,37 @@ public sealed class DoorlistApiFactory : WebApplicationFactory<Program>, IAsyncL
 
         client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
         return client;
+    }
+
+    /// <summary>A brand-new attendee, signed up through the API, and a client signed in as them.</summary>
+    public async Task<(HttpClient Client, string Email)> SignUpAttendeeAsync()
+    {
+        var email = $"attendee-{Guid.NewGuid():N}@example.com";
+        var client = CreateClient();
+        var response = await client.PostAsJsonAsync("/api/auth/register", new RegisterRequest(email, DemoPassword, "Test Attendee"));
+        response.EnsureSuccessStatusCode();
+        var login = (await response.Content.ReadFromJsonAsync<LoginResponse>(Json))!;
+        client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", login.AccessToken);
+        return (client, email);
+    }
+
+    /// <summary>A published event a week away, with one ticket type of the given capacity.</summary>
+    public async Task<(int EventId, int TicketTypeId)> PublishEventAsync(int capacity = 100, TimeSpan? startsIn = null)
+    {
+        var organizer = await CreateClientAsAsync(Roles.Organizer);
+        var startsAt = DateTimeOffset.UtcNow + (startsIn ?? TimeSpan.FromDays(7));
+
+        var created = await organizer.PostAsJsonAsync("/api/events",
+            new CreateEventRequest(Unique("Event"), "Main Hall", null, startsAt, startsAt.AddHours(3)), Json);
+        created.EnsureSuccessStatusCode();
+        var e = (await created.Content.ReadFromJsonAsync<EventResponse>(Json))!;
+
+        var typed = await organizer.PostAsJsonAsync($"/api/events/{e.Id}/ticket-types", new CreateTicketTypeRequest("General admission", capacity), Json);
+        typed.EnsureSuccessStatusCode();
+        var type = (await typed.Content.ReadFromJsonAsync<TicketTypeResponse>(Json))!;
+
+        (await organizer.PostAsync(new Uri($"/api/events/{e.Id}/publish", UriKind.Relative), null)).EnsureSuccessStatusCode();
+        return (e.Id, type.Id);
     }
 
     /// <summary>Names that can't collide between tests sharing one database.</summary>

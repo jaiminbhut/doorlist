@@ -4,3 +4,9 @@
 # EF Core writes these; analyzers and style rules don't apply to generated migrations.
 [src/**/Migrations/*.cs]
 generated_code = true
+
+[*.cs]
+# CA1716 protects libraries consumed from other .NET languages (here, VB's
+# `Event` keyword). This is an application written only in C#, and "Event"
+# is the domain's own word, so the rule doesn't apply.
+dotnet_diagnostic.CA1716.severity = none

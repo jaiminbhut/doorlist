@@ -64,6 +64,8 @@ services:
     environment:
       ConnectionStrings__Doorlist: *db-connection
       Auth__Jwt__SigningKey: ${DOORLIST_JWT_SIGNING_KEY:-local-development-signing-key-not-for-production}
+      # Local only, like the other defaults here (ADR 7).
+      Tickets__SigningKey: ${DOORLIST_TICKET_SIGNING_KEY:-MIGHAgEAMBMGByqGSM49AgEGCCqGSM49AwEHBG0wawIBAQQgwktnD/CdBfVEop8S2pcp4EtwAIDnY5vBPWC86fWhusqhRANCAARHIMeNvMgQngI5/CN1oJLhDSPptW+LZZnZQC5Yxxqlu2XUK331Jfc7Pd+j9QuQhrsEOzV8QYzHAC+e6KT0Q5Ce}
     ports:
       - "5080:8080"
     depends_on:
