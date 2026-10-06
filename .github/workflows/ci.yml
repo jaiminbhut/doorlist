@@ -118,6 +118,12 @@ jobs:
             -d '{"name":"CI smoke"}' "$base/apps"
           curl --fail --silent -H "Authorization: Bearer $token" "$base/apps" | grep -q '"CI smoke"'
 
+      - name: Browse events and fetch the ticket signing key without signing in
+        run: |
+          base=http://localhost:8080/api
+          curl --fail --silent "$base/events" | jq -e 'type == "array"' >/dev/null
+          curl --fail --silent "$base/tickets/signing-key" | jq -e '.algorithm == "ES256"'
+
       - if: failure()
         run: docker compose logs
 
