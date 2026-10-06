@@ -69,6 +69,15 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
   plugins: [
     'expo-router',
     [
+      'expo-camera',
+      {
+        cameraPermission: 'Doorlist uses the camera to scan tickets at the door.',
+        // Scanning needs no sound: don't ask for the microphone at all.
+        microphonePermission: false,
+        recordAudioAndroid: false,
+      },
+    ],
+    [
       'expo-splash-screen',
       {
         image: './assets/splash-icon.png',

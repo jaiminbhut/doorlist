@@ -49,7 +49,9 @@ describe('where the app opens (ADR 9)', () => {
 
 describe('signing in', () => {
   it('stores the session and goes to the door', async () => {
-    requestMock.mockResolvedValue(sessionFor(['DoorStaff']));
+    requestMock.mockImplementation(async (path) =>
+      path === '/api/auth/login' ? sessionFor(['DoorStaff']) : [],
+    );
     await openApp(null);
 
     await fireEvent.changeText(await screen.findByLabelText('Email'), 'door@example.com');
