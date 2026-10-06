@@ -1,9 +1,9 @@
-<section class="panel login" aria-labelledby="login-heading">
-  <header>
-    <h2 id="login-heading">Sign in</h2>
-    <p class="muted">New here? <a routerLink="/signup">Sign up</a> to claim tickets.</p>
-  </header>
+<header class="page-head">
+  <h2 id="login-heading">Sign in</h2>
+  <p>New here? <a routerLink="/signup">Sign up</a> to claim tickets.</p>
+</header>
 
+<section class="panel narrow" aria-labelledby="login-heading">
   <form [formGroup]="form" (ngSubmit)="signIn()">
     <div class="field">
       <label for="email">Email</label>

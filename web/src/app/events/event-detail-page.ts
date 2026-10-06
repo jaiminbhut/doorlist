@@ -12,6 +12,7 @@ import { DoorlistEvent, EventsApi } from './events-api';
   selector: 'app-event-detail-page',
   imports: [ReactiveFormsModule, RouterLink, DatePipe],
   templateUrl: './event-detail-page.html',
+  styleUrl: './event-detail-page.css',
 })
 export class EventDetailPage implements OnInit {
   private readonly eventsApi = inject(EventsApi);

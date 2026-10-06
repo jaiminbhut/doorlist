@@ -1,11 +1,14 @@
+<header class="page-head">
+  <h2>Organize</h2>
+  <p>Create an event, add its ticket types, and publish it when it's ready.</p>
+</header>
+
 <section class="panel" aria-labelledby="new-event-heading">
-  <header>
-    <h2 id="new-event-heading">New event</h2>
-    <p class="muted">It starts as a draft. Add ticket types, then publish it.</p>
-  </header>
+  <h3 id="new-event-heading">New event</h3>
+  <p class="hint form-intro">It starts as a draft. Only you can see it until you publish it.</p>
 
   <form [formGroup]="form" (ngSubmit)="create()">
-    <div class="grid-2">
+    <div class="fields-2">
       <div class="field">
         <label for="event-name">Name</label>
         <input id="event-name" type="text" formControlName="name" />
@@ -39,30 +42,36 @@
   </form>
 </section>
 
-<section class="panel" aria-labelledby="my-events-heading">
-  <header>
-    <h2 id="my-events-heading">Events</h2>
-  </header>
+<section aria-labelledby="my-events-heading">
+  <h3 id="my-events-heading">Your events</h3>
 
   @if (loading()) {
     <p class="muted">Loading events…</p>
   } @else if (loadError(); as message) {
     <p class="error" role="alert">{{ message }}</p>
   } @else {
-    <ul class="list organizer-events">
+    <ul class="lineup organizer-events">
       @for (event of events(); track event.id) {
         <li>
-          <span>
-            <a class="strong" [routerLink]="['/organizer/events', event.id]">{{ event.name }}</a>
-            <span class="muted"> · {{ event.startsAt | date: 'd MMM y, HH:mm' }}</span>
-            <span class="badge" [class.shipped]="event.status === 'published'">{{
-              event.status === 'published' ? 'Published' : 'Draft'
-            }}</span>
-          </span>
-          <span class="muted">{{ issued(event) }} / {{ capacity(event) }} claimed</span>
+          <p class="date">
+            <span class="day">{{ event.startsAt | date: 'd' }}</span>
+            <span class="month">{{ event.startsAt | date: 'MMM' }}</span>
+          </p>
+          <div>
+            <a class="event-link" [routerLink]="['/organizer/events', event.id]">{{
+              event.name
+            }}</a>
+            <p class="meta">
+              {{ event.venue }}, {{ event.startsAt | date: 'EEEE HH:mm' }}
+              <span class="tag" [class.published]="event.status === 'published'">{{
+                event.status === 'published' ? 'Published' : 'Draft'
+              }}</span>
+            </p>
+          </div>
+          <p class="count">{{ issued(event) }} / {{ capacity(event) }} claimed</p>
         </li>
       } @empty {
-        <li class="muted empty">No events yet. Create the first one above.</li>
+        <li class="empty">No events yet. Create the first one above.</li>
       }
     </ul>
   }

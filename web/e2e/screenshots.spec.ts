@@ -9,10 +9,13 @@ import { DEMO_PASSWORD, rendered, signIn } from './support';
  */
 test.skip(!process.env['SCREENSHOTS'], 'Set SCREENSHOTS=1 to capture screenshots');
 
-const sizes = {
-  desktop: { width: 1280, height: 860 },
-  phone: { width: 390, height: 844 },
+const phone = { width: 390, height: 844 };
+const variants = {
+  desktop: { viewport: { width: 1280, height: 860 }, colorScheme: 'light' },
+  phone: { viewport: phone, colorScheme: 'light' },
+  'phone-dark': { viewport: phone, colorScheme: 'dark' },
 } as const;
+type Variant = keyof typeof variants;
 
 async function api(
   request: APIRequestContext,
@@ -118,7 +121,7 @@ async function seed(request: APIRequestContext) {
   return { ids, attendeeEmail: email, codeToScan: claimed[0].code as string };
 }
 
-async function shoot(page: Page, name: string, size: keyof typeof sizes) {
+async function shoot(page: Page, name: string, size: Variant) {
   await rendered(page);
   await page.screenshot({ path: `../docs/screenshots/${name}-${size}.png`, fullPage: true });
 }
@@ -127,8 +130,8 @@ test('capture the main pages', async ({ browser, request }) => {
   test.setTimeout(180_000);
   const { ids, attendeeEmail, codeToScan } = await seed(request);
 
-  for (const size of Object.keys(sizes) as (keyof typeof sizes)[]) {
-    const context = await browser.newContext({ viewport: sizes[size] });
+  for (const size of Object.keys(variants) as Variant[]) {
+    const context = await browser.newContext(variants[size]);
     const page = await context.newPage();
 
     await page.goto('/events');
@@ -160,15 +163,12 @@ test('capture the main pages', async ({ browser, request }) => {
     await page.goto(`/door/${ids[1]}`);
     const field = page.getByLabel('Scan or paste a ticket code');
     await expect(field).toBeFocused();
-    if (size === 'desktop') {
-      await field.fill(codeToScan);
-      await field.press('Enter');
-      await expect(page.getByRole('status')).toContainText('Admit');
-    } else {
-      await field.fill(codeToScan);
-      await field.press('Enter');
-      await expect(page.getByRole('status')).toContainText('Already used');
-    }
+    // The same ticket every time: admitted the first time (desktop), refused after.
+    await field.fill(codeToScan);
+    await field.press('Enter');
+    await expect(page.locator('.decision')).toHaveText(
+      size === 'desktop' ? 'Admit' : "Don't admit",
+    );
     await shoot(page, 'door', size);
     await context.close();
   }

@@ -1,0 +1,22 @@
+/* Ticket, quantity and the button on one line when there's room. */
+.claim-form {
+  display: grid;
+  grid-template-columns: 1fr 120px auto;
+  align-items: end;
+  gap: 0 16px;
+}
+
+.claim-form .field {
+  margin-bottom: 0;
+}
+
+@media (max-width: 560px) {
+  .claim-form {
+    grid-template-columns: 1fr 96px;
+    gap: 16px 12px;
+  }
+
+  .claim-form button {
+    grid-column: 1 / -1;
+  }
+}

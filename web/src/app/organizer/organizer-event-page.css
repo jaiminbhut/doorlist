@@ -1,0 +1,53 @@
+.claimed {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+}
+
+/* How full each ticket type is. */
+.meter {
+  width: 96px;
+  height: 6px;
+  overflow: hidden;
+  background: var(--stamp-wash);
+  border-radius: 3px;
+}
+
+.meter > span {
+  display: block;
+  height: 100%;
+  background: var(--stamp);
+}
+
+/* Name, capacity and the button on one line when there's room. */
+.type-form {
+  display: grid;
+  grid-template-columns: 1fr 140px auto;
+  align-items: end;
+  gap: 0 16px;
+}
+
+.type-form .field {
+  margin-bottom: 0;
+}
+
+.rows .empty {
+  display: block;
+  padding: 16px 0;
+}
+
+@media (max-width: 560px) {
+  .type-form {
+    grid-template-columns: 1fr 110px;
+    gap: 16px 12px;
+  }
+
+  .type-form button {
+    grid-column: 1 / -1;
+  }
+
+  .ticket-types > li {
+    display: grid;
+    gap: 6px;
+  }
+}
