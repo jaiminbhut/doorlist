@@ -78,6 +78,7 @@ scripts/rehearse-deploy.sh
 | Environment variable | `PUBLIC_HOST` | This environment's hostname |
 | Environment secret | `DB_MIGRATOR_PASSWORD`, `DB_APP_PASSWORD` | The two database logins; safe to rotate, since each deploy syncs them |
 | Environment secret | `JWT_SIGNING_KEY` | Signs access tokens; rotating it signs everyone out |
+| Environment secret | `TICKETS_SIGNING_KEY` | Signs ticket codes (ADR 7). **Don't rotate it casually:** every ticket already issued, and every door device's cached public key, depends on it |
 | Environment secret | `DEMO_PASSWORD` | Password for the demo users; empty means no demo users |
 
 ## Operating it

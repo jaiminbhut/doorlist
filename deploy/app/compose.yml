@@ -26,6 +26,7 @@ services:
     environment:
       ConnectionStrings__Doorlist: ${APP_CONNECTION:?}
       Auth__Jwt__SigningKey: ${JWT_SIGNING_KEY:?}
+      Tickets__SigningKey: ${TICKETS_SIGNING_KEY:?}
     networks: [default, data]
 
   web:

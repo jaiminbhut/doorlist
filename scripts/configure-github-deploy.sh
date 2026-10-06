@@ -34,6 +34,8 @@ key_file=${2:?usage: configure-github-deploy.sh <server-ip> <deploy-private-key-
 [[ -f "$key_file" ]] || { echo "no such key file: $key_file" >&2; exit 1; }
 
 secret() { printf 'Sh1-%s' "$(openssl rand -hex 24)"; }
+# An ECDSA P-256 key for signing ticket codes (ADR 7): PKCS#8, DER, base64.
+ticket_key() { openssl genpkey -algorithm EC -pkeyopt ec_paramgen_curve:P-256 | openssl pkcs8 -topk8 -nocrypt -outform DER | base64 | tr -d '\n'; }
 has_secret() { gh secret list --repo "$repo" ${2:+--env "$2"} --json name --jq '.[].name' | grep -qx "$1"; }
 set_secret_once() {
   local name=$1 environment=${2:-} value=$3
@@ -95,6 +97,7 @@ JSON
   set_secret_once DB_MIGRATOR_PASSWORD "$environment" "$(secret)"
   set_secret_once DB_APP_PASSWORD "$environment" "$(secret)"
   set_secret_once JWT_SIGNING_KEY "$environment" "$(openssl rand -hex 32)"
+  set_secret_once TICKETS_SIGNING_KEY "$environment" "$(ticket_key)"
   if has_secret DEMO_PASSWORD "$environment"; then
     echo "   DEMO_PASSWORD ($environment): already set, kept"
   else
