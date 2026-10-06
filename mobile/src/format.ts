@@ -24,3 +24,20 @@ export function formatSavedAt(iso: string): string {
   const date = new Date(iso);
   return `${shortWeekday.format(date)} ${dayOfMonth.format(date)} ${shortMonth.format(date)}, ${time.format(date)}`;
 }
+
+/** "20:15". */
+export function formatTime(iso: string): string {
+  return time.format(new Date(iso));
+}
+
+/** The big day number and short month of the web's event lineup: "9", "Oct". */
+export function formatDayAndMonth(iso: string): { day: string; month: string } {
+  const date = new Date(iso);
+  return { day: dayOfMonth.format(date), month: shortMonth.format(date) };
+}
+
+/** "Friday 20:00", as in the web's door event list. */
+export function formatWeekdayTime(iso: string): string {
+  const date = new Date(iso);
+  return `${weekday.format(date)} ${time.format(date)}`;
+}
