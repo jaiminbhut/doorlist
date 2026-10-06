@@ -80,9 +80,10 @@ api/                     ASP.NET Core API, EF Core, migrations, tests
   tests/Doorlist.Api.Tests/
 web/                     Angular app
   e2e/                   Playwright browser tests
+mobile/                  Expo app for attendees and door staff (in progress)
 docs/adr/                Architecture decision records
 deploy/                  Server setup, Caddy, compose files and the deploy script
-.github/workflows/       CI (build, tests, migration checks, schema compatibility, smoke and browser tests) and Deploy
+.github/workflows/       CI (build, tests, migration checks, schema compatibility, smoke and browser tests, mobile checks) and Deploy
 scripts/                 Schema compatibility check, browser tests, deploy rehearsal, GitHub deploy setup
 docker-compose.yml       Local stack
 ```
@@ -96,7 +97,7 @@ docker-compose.yml       Local stack
 | 3. Deploy pipeline (built, waiting for the server) | Images to GHCR; staging then production with approval; settings check, backup, migrations, health check and rollback; Content-Security-Policy |
 | 4. Expand/contract ✅ | A CI check that the running API survives each PR's migrations; a breaking schema change shipped in three steps that each pass it ([`docs/migrations.md`](docs/migrations.md)) |
 | 5. Doorlist ✅ | Rename ✅; events, ticket types, attendee sign-up, claiming without overselling and signed QR tickets ✅; door check-in with offline sync ✅; the release tracker retired in steps ✅ ([ADR 6](docs/adr/0006-from-release-tracking-to-event-ticketing.md), [ADR 7](docs/adr/0007-signed-ticket-codes-and-claiming-without-overselling.md)) |
-| 6. Mobile | React Native (Expo) app: an attendee's tickets, and a door scanner that works offline |
+| 6. Mobile (in progress) | React Native (Expo) app: an attendee's tickets, and a door scanner that works offline ([ADR 9](docs/adr/0009-mobile-app-navigation-storage-and-offline-signatures.md)) |
 | 7. Polish ✅ | Browser tests in CI, its own look, motion, screenshots, [`v1.0.0`](CHANGELOG.md). The live demo follows milestone 3's server. |
 
 ## Contributing

@@ -17,7 +17,7 @@ docker compose up --build      # SQL Server, migrations, demo users, API, web
 open http://localhost:8080      # web; the API is also on http://localhost:5080
 ```
 
-Sign in as `lead@example.com`, `developer@example.com` or `viewer@example.com`, password `Doorlist-demo-2026`.
+Sign in as `organizer@example.com`, `door@example.com` or `attendee@example.com`, password `Doorlist-demo-2026`. The [README](README.md#run-it) says what each one can do.
 
 To run the API from your IDE instead, start the database and the one-shot steps, then `dotnet run`:
 
@@ -27,6 +27,19 @@ cd api && dotnet run --project src/Doorlist.Api
 ```
 
 The Development settings hold a local JWT signing key and demo password; other environments must set `Auth__Jwt__SigningKey` and `Demo__Password` as secrets.
+
+### The mobile app
+
+The Expo app in `mobile/` runs as a development build ([ADR 9](docs/adr/0009-mobile-app-navigation-storage-and-offline-signatures.md)). You need Xcode for the iOS Simulator, or Android Studio for the emulator.
+
+```sh
+docker compose up --build      # the API the app talks to
+cd mobile
+npm install
+npm run ios                    # or: npm run android
+```
+
+A development build finds the API by itself: port 5080 on the computer that runs Metro. That works from the simulator, the emulator, and a phone on the same network. To use another API, set `EXPO_PUBLIC_API_URL`, for example in `mobile/.env.local`. Preview and production builds take the address from their profile in `mobile/eas.json`, and never guess.
 
 ### Apple Silicon
 
@@ -47,6 +60,7 @@ export TESTCONTAINERS_DOCKER_SOCKET_OVERRIDE=/var/run/docker.sock
 
 - **.NET:** warnings fail the build, the recommended analyzers run on every build, and code style is enforced from `.editorconfig`.
 - **Angular:** ESLint must pass (`npm run lint`).
+- **Mobile:** Prettier, ESLint and the type check must pass (`npm run format:check`, `npm run lint`, `npm run typecheck`), and so must `npx expo-doctor`.
 - **Tests:** API behaviour is covered by integration tests against a real SQL Server (Testcontainers), not an in-memory fake.
 
 ## Database migrations

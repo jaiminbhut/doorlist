@@ -72,6 +72,36 @@ jobs:
       - run: npm test -- --watch=false
       - run: npm run build
 
+  mobile:
+    name: Mobile lint, tests and bundle
+    timeout-minutes: 15
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: mobile
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: mobile/package-lock.json
+
+      - run: npm ci
+      - run: npm run format:check
+      - run: npm run lint
+      - run: npm run typecheck
+      - run: npm test -- --ci
+
+      # Every dependency matches the Expo SDK, and the app config is valid.
+      - run: npx expo-doctor@1.20.4
+
+      # Bundles the JavaScript for iOS and Android and compiles it to Hermes
+      # bytecode, as a release build does. Native builds are made locally and
+      # by EAS, not here (ADR 9).
+      - run: npm run bundle
+
   schema-compat:
     name: Running API survives this PR's migrations
     timeout-minutes: 20
