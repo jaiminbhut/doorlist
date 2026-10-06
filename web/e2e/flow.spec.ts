@@ -33,7 +33,7 @@ test.describe.serial('Doorlist, end to end', () => {
 
     await expect(page.getByRole('heading', { name: eventName })).toBeVisible();
     await rendered(page);
-    await page.getByLabel('Ticket type').fill('General admission');
+    await page.getByLabel('Ticket type', { exact: true }).fill('General admission');
     await page.getByLabel('Capacity').fill('20');
     await page.getByRole('button', { name: 'Add ticket type' }).click();
     await page.getByRole('button', { name: 'Publish' }).click();
@@ -83,14 +83,16 @@ test.describe.serial('Doorlist, end to end', () => {
     await expect(field).toBeFocused();
     await field.fill(code);
     await field.press('Enter');
-    await expect(page.getByRole('status')).toContainText('Admit');
-    await expect(page.getByRole('status')).toContainText('E2E Attendee');
+    const verdict = page.getByRole('status');
+    await expect(verdict.locator('.decision')).toHaveText('Admit');
+    await expect(verdict).toContainText('E2E Attendee');
 
     await expect(field).toBeFocused();
     await field.fill(code);
     await field.press('Enter');
-    await expect(page.getByRole('status')).toContainText("Already used: don't admit");
-    await expect(page.getByRole('status')).toContainText('North door');
+    await expect(verdict.locator('.decision')).toHaveText("Don't admit");
+    await expect(verdict).toContainText('Already used');
+    await expect(verdict).toContainText('North door');
     expect(problems).toEqual([]);
   });
 
@@ -110,12 +112,15 @@ test.describe.serial('Doorlist, end to end', () => {
     const field = page.getByLabel('Scan or paste a ticket code');
     await field.fill(secondCode);
     await field.press('Enter');
-    await expect(page.getByRole('status')).toContainText('Admit (offline)');
+    const verdict = page.getByRole('status');
+    await expect(verdict.locator('.decision')).toHaveText('Admit');
+    await expect(verdict).toContainText('Offline: a genuine ticket');
     await expect(page.getByText('1 waiting to sync')).toBeVisible();
 
     await field.fill(secondCode.replace(/\.(.)/, '.Z'));
     await field.press('Enter');
-    await expect(page.getByRole('status')).toContainText('Not a valid ticket');
+    await expect(verdict.locator('.decision')).toHaveText("Don't admit");
+    await expect(verdict).toContainText('Not a valid ticket');
 
     // Back online: the page syncs the queue by itself (the browser's
     // "online" event), so there's nothing left for Sync now to do.

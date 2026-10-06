@@ -24,6 +24,7 @@ describe('DoorPage', () => {
   let http: HttpTestingController;
   const page = () => fixture.nativeElement as HTMLElement;
   const verdict = () => page().querySelector('.verdict')?.textContent ?? '';
+  const decision = () => page().querySelector('.decision')?.textContent?.trim();
   const waiting = () => page().querySelector('.waiting')?.textContent?.trim();
 
   const settle = async () => {
@@ -98,9 +99,10 @@ describe('DoorPage', () => {
     offline(http.expectOne({ method: 'POST', url: '/api/events/42/checkins' }));
     await vi.waitFor(async () => {
       await settle();
-      expect(verdict()).toContain('Admit (offline)');
+      expect(verdict()).toContain('Offline: a genuine ticket');
     });
 
+    expect(decision()).toBe('Admit');
     expect(document.activeElement?.id).toBe('ticket-code');
   });
 
@@ -119,13 +121,13 @@ describe('DoorPage', () => {
     });
     await vi.waitFor(async () => {
       await settle();
-      expect(verdict()).toContain('Admit');
+      expect(decision()).toBe('Admit');
     });
     http
       .expectOne('/api/events/42/checkins/summary')
       .flush({ issued: 10, admitted: 4, duplicates: 0, invalid: 0, wrongEvent: 0 });
 
-    expect(verdict()).toContain('Asha · General admission');
+    expect(verdict()).toContain('Asha, General admission');
   });
 
   it('online, refuses a ticket already used and says where and when', async () => {
@@ -137,8 +139,9 @@ describe('DoorPage', () => {
       .flush({ results: [result('alreadyAdmitted')] });
     await vi.waitFor(async () => {
       await settle();
-      expect(verdict()).toContain("Already used: don't admit");
+      expect(verdict()).toContain('Already used: Asha was admitted');
     });
+    expect(decision()).toBe("Don't admit");
     http
       .expectOne('/api/events/42/checkins/summary')
       .flush({ issued: 10, admitted: 3, duplicates: 1, invalid: 0, wrongEvent: 0 });
@@ -153,16 +156,18 @@ describe('DoorPage', () => {
     offline(http.expectOne({ method: 'POST', url: '/api/events/42/checkins' }));
     await vi.waitFor(async () => {
       await settle();
-      expect(verdict()).toContain('Admit (offline)');
+      expect(verdict()).toContain('Offline: a genuine ticket');
     });
+    expect(decision()).toBe('Admit');
     expect(waiting()).toBe('1 waiting to sync');
 
     await scan(code);
     offline(http.expectOne({ method: 'POST', url: '/api/events/42/checkins' }));
     await vi.waitFor(async () => {
       await settle();
-      expect(verdict()).toContain("Already used at this door: don't admit");
+      expect(verdict()).toContain('Already used at this door');
     });
+    expect(decision()).toBe("Don't admit");
     expect(waiting()).toBe('1 waiting to sync');
   });
 

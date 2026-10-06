@@ -1,9 +1,14 @@
 <header class="site-header">
-  <div class="container header-row">
-    <div>
-      <h1><a routerLink="/events">Doorlist</a></h1>
-      <p>Free tickets, checked at the door.</p>
-    </div>
+  <div class="container masthead">
+    <h1 class="wordmark">
+      <a routerLink="/events">
+        <svg class="door-mark" viewBox="0 0 18 24" aria-hidden="true">
+          <path d="M2 24V3a3 3 0 0 1 3-3h8a3 3 0 0 1 3 3v21z" />
+          <circle class="knob" cx="12.5" cy="13" r="1.5" />
+        </svg>
+        Doorlist
+      </a>
+    </h1>
 
     <nav aria-label="Main">
       <a routerLink="/events" routerLinkActive="active">Events</a>
@@ -16,18 +21,30 @@
       @if (auth.canCheckIn()) {
         <a routerLink="/door" routerLinkActive="active">Door</a>
       }
+    </nav>
 
+    <div class="account">
       @if (auth.user(); as user) {
-        <span class="muted">{{ user.displayName }} · {{ user.roles.join(', ') }}</span>
-        <button class="secondary" type="button" (click)="signOut()">Sign out</button>
+        <p class="who">
+          <span class="who-name">{{ user.displayName }}</span>
+          <span class="who-role">{{ roleNames(user.roles) }}</span>
+        </p>
+        <button class="secondary small" type="button" (click)="signOut()">Sign out</button>
       } @else {
         <a routerLink="/login" routerLinkActive="active">Sign in</a>
-        <a routerLink="/signup" routerLinkActive="active">Sign up</a>
+        <a class="button primary small" routerLink="/signup">Sign up</a>
       }
-    </nav>
+    </div>
   </div>
 </header>
 
 <main class="container">
   <router-outlet />
 </main>
+
+<footer class="container site-footer">
+  <p>
+    Doorlist is a demo: the events and tickets aren't real.
+    <a href="https://github.com/jaiminbhut/doorlist">Source on GitHub</a>
+  </p>
+</footer>

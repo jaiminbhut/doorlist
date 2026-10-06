@@ -16,7 +16,7 @@ describe('App', () => {
   };
 
   const links = (page: HTMLElement) =>
-    [...page.querySelectorAll('nav a')].map((a) => a.textContent?.trim());
+    [...page.querySelectorAll('nav a, .account a')].map((a) => a.textContent?.trim());
 
   it('renders the product name in the header', async () => {
     const page = await render();
@@ -34,7 +34,9 @@ describe('App', () => {
     const organizer = await render('Organizer');
     expect(links(organizer)).toEqual(['Events', 'Organize', 'Door']);
     TestBed.resetTestingModule();
-    expect(links(await render('DoorStaff'))).toEqual(['Events', 'Door']);
-    expect(organizer.querySelector('nav')?.textContent).toContain('Organizer');
+    const doorStaff = await render('DoorStaff');
+    expect(links(doorStaff)).toEqual(['Events', 'Door']);
+    expect(organizer.querySelector('.account')?.textContent).toContain('Organizer');
+    expect(doorStaff.querySelector('.account')?.textContent).toContain('Door staff');
   });
 });

@@ -1,31 +1,79 @@
+/*
+ * Doorlist's look:
+ * - gig-poster type for an event's name and date
+ * - a legible text face for everything else
+ * - violet hand-stamp ink as the one brand colour
+ * Green, red and amber are kept for the door's verdicts.
+ *
+ * The fonts are self-hosted, because the CSP allows fonts only from this
+ * origin:
+ * - Big Shoulders, a condensed signage face, for display type.
+ * - Atkinson Hyperlegible Next, designed to stay readable in poor
+ *   conditions, for text. Names and codes get read at a dark door.
+ */
+@import '@fontsource-variable/big-shoulders/opsz.css';
+@import '@fontsource-variable/atkinson-hyperlegible-next/wght.css';
+
 :root {
   color-scheme: light dark;
-  --bg: #f7f7f5;
-  --surface: #ffffff;
-  --text: #1b1b19;
-  --muted: #6b6b66;
-  --border: #e3e3de;
-  --accent: #2f5bd3;
-  --accent-text: #ffffff;
-  --danger: #b42318;
-  --success: #1f7a4d;
-  --warning-bg: #fdf3e1;
-  --warning-text: #8a4b08;
+
+  --ground: #efedf6;
+  --paper: #ffffff;
+  --ink: #221a3d;
+  --ink-soft: #5b5476;
+  --line: #d8d3ea;
+  --stamp: #5b2bd0;
+  --on-stamp: #ffffff;
+  --stamp-wash: #e5ddfb;
+  --ok: #0b7a47;
+  --danger: #b3202c;
+  --notice-bg: #fbefd2;
+  --notice-ink: #664400;
+
+  /* The door console is dark in both themes, like the venues it works in. */
+  --console: #160f27;
+  --console-raised: #241b3d;
+  --console-ink: #f3effc;
+  --console-soft: #aea6cb;
+  --console-line: #3d3360;
+  --console-stamp: #b39bff;
+  --on-console-stamp: #170d33;
+  --admit: #0e8a50;
+  --refuse: #c8202f;
+  --hold: #f2b200;
+  --on-hold: #221a3d;
+
+  --font-display: 'Big Shoulders Variable', 'Arial Narrow', sans-serif;
+  --font-text: 'Atkinson Hyperlegible Next Variable', system-ui, sans-serif;
+
+  --step--1: 0.875rem;
+  --step-0: 1.0625rem;
+  --step-1: 1.25rem;
+  --step-2: 1.625rem;
+  --step-3: 2.25rem;
+  --step-4: 3.25rem;
+  --step-5: 4.5rem;
+
+  --radius-control: 10px;
+  --radius-surface: 18px;
 }
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --bg: #141413;
-    --surface: #1d1d1b;
-    --text: #ededea;
-    --muted: #a1a19b;
-    --border: #2e2e2b;
-    --accent: #7a9cf5;
-    --accent-text: #0e1630;
-    --danger: #f97066;
-    --success: #5fd39b;
-    --warning-bg: #3a2a10;
-    --warning-text: #f5c27a;
+    --ground: #120e1c;
+    --paper: #1d1730;
+    --ink: #eeeaf8;
+    --ink-soft: #a69ec2;
+    --line: #352d4e;
+    --stamp: #b39bff;
+    --on-stamp: #170d33;
+    --stamp-wash: #2c2352;
+    --ok: #6fdba4;
+    --danger: #ff8e96;
+    --notice-bg: #3a2c0e;
+    --notice-ink: #f5cf7a;
+    --console: #0c0817;
+    --console-raised: #1d1631;
   }
 }
 
@@ -35,189 +83,404 @@
 
 body {
   margin: 0;
-  background: var(--bg);
-  color: var(--text);
-  font-family:
-    system-ui,
-    -apple-system,
-    'Segoe UI',
-    sans-serif;
-  line-height: 1.5;
+  background: var(--ground);
+  color: var(--ink);
+  font-family: var(--font-text);
+  font-size: var(--step-0);
+  line-height: 1.55;
+  -webkit-font-smoothing: antialiased;
+}
+
+p {
+  margin: 0;
 }
 
 a {
-  color: var(--accent);
+  color: var(--stamp);
+  text-decoration-thickness: 1px;
+  text-underline-offset: 3px;
 }
 
-h2 {
-  margin: 0 0 4px;
-  font-size: 1.25rem;
+a:hover {
+  text-decoration-thickness: 2px;
+}
+
+:focus-visible {
+  outline: 3px solid var(--stamp);
+  outline-offset: 2px;
+}
+
+/* Page structure */
+
+.page-head {
+  margin-bottom: 28px;
+}
+
+.page-head h2,
+.poster h2 {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: clamp(var(--step-3), 7vw, var(--step-4));
+  font-weight: 800;
+  line-height: 0.95;
+}
+
+.page-head p {
+  max-width: 60ch;
+  margin-top: 10px;
+  color: var(--ink-soft);
 }
 
 h3 {
-  margin: 24px 0 8px;
-  font-size: 1rem;
+  margin: 0 0 12px;
+  font-size: var(--step-1);
+  font-weight: 700;
 }
 
+.back {
+  margin-bottom: 20px;
+  font-size: var(--step--1);
+  font-weight: 700;
+}
+
+.back a {
+  color: var(--ink-soft);
+  text-decoration: none;
+}
+
+.back a:hover {
+  color: var(--stamp);
+}
+
+/* An event's own header: when, what, where. */
+.poster {
+  margin-bottom: 28px;
+}
+
+.poster h2 {
+  font-size: clamp(var(--step-4), 10vw, var(--step-5));
+  overflow-wrap: anywhere;
+}
+
+.poster .when {
+  margin-bottom: 8px;
+  color: var(--stamp);
+  font-weight: 700;
+}
+
+.poster .where {
+  margin-top: 10px;
+  font-size: var(--step-1);
+}
+
+.poster .tag {
+  margin-top: 14px;
+}
+
+.description {
+  max-width: 62ch;
+  margin-bottom: 28px;
+}
+
+/* A surface for forms and anything being worked on. */
 .panel {
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: 12px;
-  padding: 24px;
-  margin-bottom: 24px;
+  margin-bottom: 28px;
+  padding: 28px;
+  background: var(--paper);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-surface);
 }
 
-.panel > header p {
-  margin: 0 0 20px;
+.panel.narrow {
+  max-width: 460px;
 }
 
-.muted {
-  color: var(--muted);
-  font-size: 0.875rem;
+/* Text */
+
+.muted,
+.hint {
+  color: var(--ink-soft);
+  font-size: var(--step--1);
 }
 
 .error {
+  margin-top: 10px;
   color: var(--danger);
-  font-size: 0.875rem;
-  margin: 8px 0 0;
+  font-size: var(--step--1);
+  font-weight: 700;
 }
 
 .notice {
-  background: var(--warning-bg);
-  color: var(--warning-text);
-  border-radius: 8px;
-  padding: 10px 12px;
-  font-size: 0.875rem;
-  margin: 12px 0 0;
+  margin-top: 14px;
+  padding: 12px 16px;
+  background: var(--notice-bg);
+  color: var(--notice-ink);
+  border-radius: var(--radius-control);
+  font-size: var(--step--1);
+}
+
+.notice a {
+  color: inherit;
+  font-weight: 700;
+}
+
+.empty {
+  padding: 28px 0;
+  color: var(--ink-soft);
+}
+
+/* A short status, outlined like a rubber stamp. */
+.tag {
+  display: inline-block;
+  padding: 1px 9px;
+  border: 2px solid currentColor;
+  border-radius: 6px;
+  color: var(--ink-soft);
+  font-size: var(--step--1);
+  font-weight: 700;
+  line-height: 1.5;
+  white-space: nowrap;
+}
+
+.tag.published {
+  color: var(--ok);
+}
+
+.tag.sold-out {
+  color: var(--danger);
 }
 
 /* Forms */
+
 .field {
   display: grid;
   gap: 6px;
-  margin-bottom: 14px;
+  margin-bottom: 18px;
 }
 
-.field label,
-.field-label {
-  font-size: 0.875rem;
-  font-weight: 600;
+.field label {
+  font-size: var(--step--1);
+  font-weight: 700;
 }
 
-.row {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-  align-items: center;
-}
-
-.grid-2 {
+.fields-2 {
   display: grid;
-  gap: 0 12px;
-  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 0 16px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
 }
 
 input[type='text'],
 input[type='email'],
 input[type='password'],
-input[type='url'],
 input[type='number'],
+input[type='datetime-local'],
 select,
 textarea {
   width: 100%;
   min-width: 0;
-  padding: 10px 12px;
-  border: 1px solid var(--border);
-  border-radius: 8px;
-  background: var(--bg);
-  color: var(--text);
+  min-height: 48px;
+  padding: 10px 14px;
+  background: var(--paper);
+  color: var(--ink);
+  border: 2px solid var(--line);
+  border-radius: var(--radius-control);
   font: inherit;
 }
 
-.row input {
-  flex: 1;
-  width: auto;
+input:focus,
+select:focus,
+textarea:focus {
+  border-color: var(--stamp);
+  outline: 3px solid var(--stamp-wash);
+  outline-offset: 0;
 }
 
 textarea {
-  min-height: 80px;
+  min-height: 96px;
   resize: vertical;
 }
 
-.checkbox {
-  display: flex;
-  gap: 8px;
+button,
+.button {
+  display: inline-flex;
   align-items: center;
-  font-size: 0.875rem;
-}
-
-button {
-  padding: 10px 16px;
-  border: 1px solid transparent;
-  border-radius: 8px;
+  justify-content: center;
+  min-height: 48px;
+  padding: 0 22px;
+  border: 2px solid transparent;
+  border-radius: var(--radius-control);
   font: inherit;
-  font-weight: 600;
+  font-weight: 700;
+  text-decoration: none;
   cursor: pointer;
 }
 
-button.primary {
-  background: var(--accent);
-  color: var(--accent-text);
+.primary {
+  background: var(--stamp);
+  color: var(--on-stamp);
 }
 
-button.secondary {
+.primary:hover:not(:disabled) {
+  background: color-mix(in oklab, var(--stamp) 86%, var(--ink));
+}
+
+.secondary {
   background: transparent;
-  border-color: var(--border);
-  color: var(--text);
+  border-color: var(--stamp);
+  color: var(--stamp);
+}
+
+.secondary:hover:not(:disabled) {
+  background: var(--stamp-wash);
 }
 
 button:disabled {
-  opacity: 0.5;
+  opacity: 0.45;
   cursor: not-allowed;
 }
 
-/* Lists */
-.list {
-  list-style: none;
-  margin: 16px 0 0;
-  padding: 0;
-  border-top: 1px solid var(--border);
-}
-
-.list > li {
+.actions {
   display: flex;
   flex-wrap: wrap;
-  justify-content: space-between;
   align-items: center;
-  gap: 4px 16px;
-  padding: 12px 0;
-  border-bottom: 1px solid var(--border);
+  gap: 12px 16px;
 }
 
-.list .empty {
-  justify-content: center;
+/*
+ * The lineup lists events the way a venue lists its dates: a big day
+ * number first. The event's name is the row's link, stretched over the row.
+ */
+.lineup {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  border-top: 2px solid var(--ink);
 }
 
-.strong {
-  font-weight: 600;
+.lineup > li {
+  position: relative;
+  display: grid;
+  grid-template-columns: 56px 1fr auto;
+  align-items: center;
+  gap: 2px 20px;
+  padding: 16px 12px 16px 0;
+  border-bottom: 1px solid var(--line);
 }
 
-.badge {
-  display: inline-block;
-  padding: 1px 8px;
-  border-radius: 999px;
-  border: 1px solid var(--border);
-  font-size: 0.75rem;
-  font-weight: 600;
+.lineup > li.empty {
+  display: block;
+  padding: 28px 0;
+}
+
+.lineup > li:has(.event-link:hover) {
+  background: var(--paper);
+}
+
+.date {
+  display: grid;
+  justify-items: center;
+  line-height: 1;
+}
+
+.date .day {
+  font-family: var(--font-display);
+  font-size: var(--step-4);
+  font-weight: 800;
+}
+
+.date .month {
+  color: var(--stamp);
+  font-size: var(--step--1);
+  font-weight: 700;
+}
+
+.event-link {
+  color: var(--ink);
+  font-family: var(--font-display);
+  font-size: var(--step-2);
+  font-weight: 750;
+  line-height: 1.1;
+  text-decoration: none;
+}
+
+.event-link::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+}
+
+.event-link:focus-visible {
+  outline: none;
+}
+
+.lineup > li:has(.event-link:focus-visible) {
+  outline: 3px solid var(--stamp);
+  outline-offset: 2px;
+}
+
+.lineup .meta {
+  margin-top: 4px;
+  color: var(--ink-soft);
+  font-size: var(--step--1);
+}
+
+.lineup .meta .tag {
+  margin-left: 8px;
+}
+
+.lineup .count {
+  font-weight: 700;
+  text-align: right;
   white-space: nowrap;
 }
 
-.badge.production {
-  border-color: var(--danger);
-  color: var(--danger);
+/* Plain rows inside a panel: ticket types, flagged scans. */
+.rows {
+  margin: 0 0 20px;
+  padding: 0;
+  list-style: none;
 }
 
-.badge.shipped {
-  border-color: var(--success);
-  color: var(--success);
+.rows > li {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 4px 16px;
+  padding: 12px 0;
+  border-bottom: 1px solid var(--line);
+}
+
+.rows > li:first-child {
+  border-top: 1px solid var(--line);
+}
+
+.rows .name {
+  font-weight: 700;
+}
+
+@media (max-width: 560px) {
+  .panel {
+    padding: 22px 18px;
+  }
+
+  .fields-2 {
+    grid-template-columns: 1fr;
+  }
+
+  .lineup > li {
+    grid-template-columns: 44px 1fr;
+    gap: 2px 14px;
+  }
+
+  .date .day {
+    font-size: var(--step-3);
+  }
+
+  .lineup .count {
+    grid-column: 2;
+    color: var(--ink-soft);
+    font-size: var(--step--1);
+    text-align: left;
+  }
 }

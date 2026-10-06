@@ -1,15 +1,16 @@
-<section class="panel" aria-labelledby="signup-heading">
-  <header>
-    <h2 id="signup-heading">Sign up</h2>
-    <p class="muted">
-      Create an account to claim free tickets. Already have one? <a routerLink="/login">Sign in</a>.
-    </p>
-  </header>
+<header class="page-head">
+  <h2 id="signup-heading">Sign up</h2>
+  <p>
+    Create an account to claim free tickets. Already have one? <a routerLink="/login">Sign in</a>.
+  </p>
+</header>
 
+<section class="panel narrow" aria-labelledby="signup-heading">
   <form [formGroup]="form" (ngSubmit)="signUp()">
     <div class="field">
       <label for="signup-name">Your name</label>
       <input id="signup-name" type="text" autocomplete="name" formControlName="displayName" />
+      <p class="hint">Door staff see it when they check your ticket.</p>
       @for (message of errors()['displayName'] ?? []; track message) {
         <p class="error" role="alert">{{ message }}</p>
       }
@@ -29,7 +30,7 @@
         autocomplete="new-password"
         formControlName="password"
       />
-      <p class="muted">At least 12 characters, with upper and lower case, a number and a symbol.</p>
+      <p class="hint">At least 12 characters, with upper and lower case, a number and a symbol.</p>
       @for (message of errors()['password'] ?? []; track message) {
         <p class="error" role="alert">{{ message }}</p>
       }

@@ -1,41 +1,197 @@
-.scan-form input {
-  font-size: 1.125rem;
+/*
+ * The door console: dark in both themes (venue entrances are), with the
+ * verdict as a big block of colour that reads from arm's length. The word
+ * says the decision too, so colour is never the only signal.
+ */
+.console {
+  padding: 28px;
+  background: var(--console);
+  color: var(--console-ink);
+  border-radius: 22px;
+}
+
+.console-head h2 {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: var(--step-3);
+  font-weight: 800;
+  line-height: 1;
+}
+
+.door-name {
+  margin-top: 6px;
+  color: var(--console-soft);
+  font-weight: 700;
+}
+
+.offline-limit {
+  display: inline-block;
+  margin-top: 12px;
+  padding: 4px 10px;
+  border: 2px solid var(--hold);
+  border-radius: 6px;
+  color: var(--hold);
+  font-size: var(--step--1);
+  font-weight: 700;
+}
+
+.scan-form {
+  margin-top: 28px;
+}
+
+.scan-form label {
+  display: block;
+  margin-bottom: 8px;
+  color: var(--console-soft);
+  font-size: var(--step--1);
+  font-weight: 700;
+}
+
+.scan-row {
+  display: flex;
+  gap: 10px;
+}
+
+.scan-row input {
+  flex: 1;
+  min-height: 56px;
+  background: var(--console-raised);
+  color: var(--console-ink);
+  border-color: var(--console-line);
+  font-size: var(--step-1);
+}
+
+.scan-row input:focus {
+  border-color: var(--console-stamp);
+  outline-color: color-mix(in oklab, var(--console-stamp) 35%, transparent);
+}
+
+.console button {
+  min-height: 56px;
+  background: var(--console-stamp);
+  color: var(--on-console-stamp);
+}
+
+.console :focus-visible {
+  outline-color: var(--console-stamp);
 }
 
 .verdict {
-  margin-top: 16px;
-  padding: 16px;
-  border-radius: 10px;
-  border: 2px solid var(--border);
+  display: grid;
+  align-content: center;
+  gap: 6px;
+  min-height: 176px;
+  margin-top: 20px;
+  padding: 24px 28px;
+  border-radius: 16px;
 }
 
-.verdict p {
-  margin: 0;
-}
-
-.verdict-title {
-  font-size: 1.375rem;
-  font-weight: 700;
-  margin-bottom: 4px !important;
+.verdict.ready {
+  border: 2px dashed var(--console-line);
+  color: var(--console-soft);
 }
 
 .verdict.good {
-  border-color: var(--success);
-  color: var(--success);
+  background: var(--admit);
+  color: #ffffff;
 }
 
 .verdict.bad {
-  border-color: var(--danger);
-  color: var(--danger);
+  background: var(--refuse);
+  color: #ffffff;
 }
 
 .verdict.warn {
-  border-color: var(--warning-text);
-  color: var(--warning-text);
-  background: var(--warning-bg);
+  background: var(--hold);
+  color: var(--on-hold);
 }
 
-.status-row {
-  margin-top: 16px;
+.decision {
+  font-family: var(--font-display);
+  font-size: clamp(var(--step-4), 13vw, 5.5rem);
+  font-weight: 850;
+  line-height: 0.9;
+}
+
+.reason {
+  max-width: 52ch;
+  font-size: var(--step-1);
+  font-weight: 600;
+  line-height: 1.35;
+}
+
+.tally {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px 28px;
+  margin-top: 24px;
+  color: var(--console-soft);
+}
+
+.totals .admitted {
+  color: var(--console-ink);
+  font-family: var(--font-display);
+  font-size: var(--step-3);
+  font-weight: 800;
+  line-height: 1;
+}
+
+.sync-group {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-left: auto;
+}
+
+.console .sync {
+  min-height: 44px;
+  background: transparent;
+  border-color: var(--console-line);
+  color: var(--console-ink);
+}
+
+.flagged-block {
+  margin-top: 28px;
+  padding-top: 20px;
+  border-top: 1px solid var(--console-line);
+}
+
+.flagged {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.flagged li {
+  display: flex;
+  flex-wrap: wrap;
   justify-content: space-between;
+  gap: 4px 16px;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--console-line);
+  color: var(--console-soft);
+}
+
+.flagged .name {
+  color: var(--console-ink);
+  font-weight: 700;
+}
+
+/* Phones: the console fills the screen's width; it's the whole job. */
+@media (max-width: 560px) {
+  .console {
+    margin: 0 -16px;
+    padding: 22px 16px 28px;
+    border-radius: 0;
+  }
+
+  .verdict {
+    min-height: 200px;
+    padding: 22px 20px;
+  }
+
+  .sync-group {
+    margin-left: 0;
+  }
 }

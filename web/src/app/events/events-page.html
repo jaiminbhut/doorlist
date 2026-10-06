@@ -1,32 +1,32 @@
-<section class="panel" aria-labelledby="events-heading">
-  <header>
-    <h2 id="events-heading">Upcoming events</h2>
-    <p class="muted">Free tickets. Claim one, and show its QR code at the door.</p>
-  </header>
+<header class="page-head">
+  <h2 id="events-heading">Upcoming events</h2>
+  <p>Free tickets. Claim one, and show its QR code at the door.</p>
+</header>
 
-  @if (loading()) {
-    <p class="muted">Loading events…</p>
-  } @else if (loadError(); as message) {
-    <p class="error" role="alert">{{ message }}</p>
-  } @else {
-    <ul class="list events">
-      @for (event of events(); track event.id) {
-        <li>
-          <span>
-            <a class="strong event-name" [routerLink]="['/events', event.id]">{{ event.name }}</a>
-            <span class="muted">
-              · {{ event.venue }} · {{ event.startsAt | date: 'EEE d MMM, HH:mm' }}</span
-            >
-          </span>
-          @if (remaining(event) > 0) {
-            <span class="muted">{{ remaining(event) }} left</span>
-          } @else {
-            <span class="badge">Sold out</span>
-          }
-        </li>
-      } @empty {
-        <li class="muted empty">No upcoming events yet.</li>
-      }
-    </ul>
-  }
-</section>
+@if (loading()) {
+  <p class="muted">Loading events…</p>
+} @else if (loadError(); as message) {
+  <p class="error" role="alert">{{ message }}</p>
+} @else {
+  <ul class="lineup events" aria-labelledby="events-heading">
+    @for (event of events(); track event.id) {
+      <li>
+        <p class="date">
+          <span class="day">{{ event.startsAt | date: 'd' }}</span>
+          <span class="month">{{ event.startsAt | date: 'MMM' }}</span>
+        </p>
+        <div>
+          <a class="event-link" [routerLink]="['/events', event.id]">{{ event.name }}</a>
+          <p class="meta">{{ event.venue }}, {{ event.startsAt | date: 'EEEE HH:mm' }}</p>
+        </div>
+        @if (remaining(event) > 0) {
+          <p class="count">{{ remaining(event) }} left</p>
+        } @else {
+          <p class="count"><span class="tag sold-out">Sold out</span></p>
+        }
+      </li>
+    } @empty {
+      <li class="empty">No upcoming events yet. Check back soon.</li>
+    }
+  </ul>
+}

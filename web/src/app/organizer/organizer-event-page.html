@@ -1,35 +1,44 @@
-<p><a routerLink="/organizer">← All events</a></p>
+<p class="back"><a routerLink="/organizer">← All events</a></p>
 
 @if (loadError(); as message) {
   <p class="error" role="alert">{{ message }}</p>
 } @else if (event(); as event) {
-  <section class="panel" aria-labelledby="organizer-event-heading">
-    <header>
-      <h2 id="organizer-event-heading">{{ event.name }}</h2>
-      <p class="muted">
-        {{ event.venue }} · {{ event.startsAt | date: 'EEEE d MMMM y, HH:mm' }}
-        <span class="badge" [class.shipped]="!isDraft()">{{
-          isDraft() ? 'Draft' : 'Published'
-        }}</span>
+  <article aria-labelledby="organizer-event-heading">
+    <header class="poster">
+      <p class="when">
+        {{ event.startsAt | date: 'EEEE d MMMM y' }}, {{ event.startsAt | date: 'HH:mm' }} to
+        {{ event.endsAt | date: 'HH:mm' }}
       </p>
+      <h2 id="organizer-event-heading">{{ event.name }}</h2>
+      <p class="where">{{ event.venue }}</p>
+      <span class="tag" [class.published]="!isDraft()">{{
+        isDraft() ? 'Draft' : 'Published'
+      }}</span>
     </header>
 
-    <h3>Ticket types</h3>
-    <ul class="list ticket-types">
-      @for (type of event.ticketTypes; track type.id) {
-        <li>
-          <span class="strong">{{ type.name }}</span>
-          <span class="muted"
-            >{{ type.capacity - type.remaining }} / {{ type.capacity }} claimed</span
-          >
-        </li>
-      } @empty {
-        <li class="muted empty">No ticket types yet.</li>
-      }
-    </ul>
+    <section class="panel" aria-labelledby="ticket-types-heading">
+      <h3 id="ticket-types-heading">Ticket types</h3>
+      <ul class="rows ticket-types">
+        @for (type of event.ticketTypes; track type.id) {
+          <li>
+            <span class="name">{{ type.name }}</span>
+            <span class="claimed">
+              <span class="meter" aria-hidden="true">
+                <span
+                  [style.width.%]="(100 * (type.capacity - type.remaining)) / type.capacity"
+                ></span>
+              </span>
+              <span class="muted"
+                >{{ type.capacity - type.remaining }} / {{ type.capacity }} claimed</span
+              >
+            </span>
+          </li>
+        } @empty {
+          <li class="empty">No ticket types yet. Add one below, then publish.</li>
+        }
+      </ul>
 
-    <form class="type-form" [formGroup]="typeForm" (ngSubmit)="addTicketType()">
-      <div class="grid-2">
+      <form class="type-form" [formGroup]="typeForm" (ngSubmit)="addTicketType()">
         <div class="field">
           <label for="type-name">Ticket type</label>
           <input
@@ -43,14 +52,14 @@
           <label for="type-capacity">Capacity</label>
           <input id="type-capacity" type="number" min="1" step="1" formControlName="capacity" />
         </div>
-      </div>
-      <button class="secondary" type="submit" [disabled]="typeForm.invalid || busy()">
-        Add ticket type
-      </button>
-    </form>
+        <button class="secondary" type="submit" [disabled]="typeForm.invalid || busy()">
+          Add ticket type
+        </button>
+      </form>
+    </section>
 
     @if (isDraft()) {
-      <div class="row publish-row">
+      <div class="actions publish-row">
         <button
           class="primary"
           type="button"
@@ -64,7 +73,7 @@
         <p class="notice">{{ reason }}</p>
       }
     } @else {
-      <p class="muted">
+      <p class="published-note">
         Published. <a [routerLink]="['/events', event.id]">See the public page</a>.
       </p>
     }
@@ -72,7 +81,7 @@
     @if (actionError(); as message) {
       <p class="error" role="alert">{{ message }}</p>
     }
-  </section>
+  </article>
 } @else {
   <p class="muted">Loading…</p>
 }
