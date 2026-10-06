@@ -1,4 +1,5 @@
 import { Injectable } from '@angular/core';
+import { newId } from './ids';
 
 export interface QueuedScan {
   scanId: string;
@@ -24,7 +25,7 @@ export class DoorStore {
   deviceId(): string {
     let id = this.read('doorlist.door.deviceId');
     if (!id) {
-      id = crypto.randomUUID();
+      id = newId();
       this.write('doorlist.door.deviceId', id);
     }
     return id;

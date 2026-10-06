@@ -68,6 +68,7 @@ jobs:
       - run: npm ci
       - run: npm run format:check
       - run: npm run lint
+      - run: npm run typecheck:e2e
       - run: npm test -- --watch=false
       - run: npm run build
 
@@ -140,6 +141,35 @@ jobs:
           base=http://localhost:8080/api
           curl --fail --silent "$base/events" | jq -e 'type == "array"' >/dev/null
           curl --fail --silent "$base/tickets/signing-key" | jq -e '.algorithm == "ES256"'
+
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: web/package-lock.json
+
+      - name: Install Playwright and Chromium
+        working-directory: web
+        run: |
+          npm ci
+          npx playwright install --with-deps chromium
+
+      # The whole flow in a real browser, through nginx and the production
+      # build: organizer publishes, attendee claims, door checks in online
+      # and offline. The CSP is enforced, and any violation fails the test.
+      - name: Browser tests
+        working-directory: web
+        env:
+          E2E_BASE_URL: http://localhost:8080
+        run: npx playwright test
+
+      - if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report
+          path: |
+            web/playwright-report
+            web/test-results
 
       - if: failure()
         run: docker compose logs

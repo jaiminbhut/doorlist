@@ -24,6 +24,7 @@ import {
   ScanResult,
 } from './checkin-api';
 import { DoorStore, QueuedScan } from './door-store';
+import { canVerifyOffline, newId } from './ids';
 import { importSigningKey, verifyTicketCode } from './ticket-code';
 
 /** What the door shows for the last scan. "offline" outcomes are this device's own verdict, waiting to sync. */
@@ -66,6 +67,8 @@ export class DoorPage implements OnInit {
   protected readonly flagged = signal<ScanResult[]>([]);
   protected readonly summary = signal<CheckInSummary | null>(null);
   protected readonly hasKey = signal(false);
+  /** False on plain HTTP, where browsers withhold WebCrypto: online checking still works. */
+  protected readonly canCheckOffline = canVerifyOffline();
   protected readonly doorName = this.store.doorName();
 
   // A FormGroup, not a lone control: only [formGroup] gives the form ngSubmit
@@ -121,7 +124,9 @@ export class DoorPage implements OnInit {
     this.checking.set(true);
     this.form.reset();
     const scan: QueuedScan = {
-      scanId: crypto.randomUUID(),
+      // newId, not crypto.randomUUID: that one doesn't exist on plain HTTP,
+      // and throwing here would make the scan silently do nothing.
+      scanId: newId(),
       code,
       scannedAt: new Date().toISOString(),
     };
@@ -181,6 +186,13 @@ export class DoorPage implements OnInit {
   }
 
   private async decideOffline(scan: QueuedScan): Promise<Verdict> {
+    if (!this.canCheckOffline) {
+      return {
+        kind: 'error',
+        message:
+          "Offline, and this page isn't on HTTPS, so the browser can't check tickets by itself.",
+      };
+    }
     if (!this.key) {
       return {
         kind: 'error',
@@ -216,7 +228,7 @@ export class DoorPage implements OnInit {
     }
 
     const cached = this.store.signingKey();
-    if (cached) {
+    if (cached && this.canCheckOffline) {
       this.key = await importSigningKey(cached.publicKey);
       this.hasKey.set(true);
     }

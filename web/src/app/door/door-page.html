@@ -9,7 +9,9 @@
     <h2 id="checkin-heading">{{ event()?.name ?? 'Check-in' }}</h2>
     <p class="muted">
       {{ doorName || 'Unnamed door' }}
-      @if (!hasKey()) {
+      @if (!canCheckOffline) {
+        · <span class="badge">Not on HTTPS: can't check tickets offline</span>
+      } @else if (!hasKey()) {
         · <span class="badge">No ticket key yet: can't check tickets offline</span>
       }
     </p>

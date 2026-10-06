@@ -64,6 +64,9 @@ services:
     environment:
       ConnectionStrings__Doorlist: *db-connection
       Auth__Jwt__SigningKey: ${DOORLIST_JWT_SIGNING_KEY:-local-development-signing-key-not-for-production}
+      # Browser tests and the CI smoke test sign in far more often than a
+      # person would. Deploys keep the API's default of 10 a minute.
+      RateLimits__AuthPerMinute: ${DOORLIST_AUTH_RATE_LIMIT:-300}
       # Local only, like the other defaults here (ADR 7).
       Tickets__SigningKey: ${DOORLIST_TICKET_SIGNING_KEY:-MIGHAgEAMBMGByqGSM49AgEGCCqGSM49AwEHBG0wawIBAQQgwktnD/CdBfVEop8S2pcp4EtwAIDnY5vBPWC86fWhusqhRANCAARHIMeNvMgQngI5/CN1oJLhDSPptW+LZZnZQC5Yxxqlu2XUK331Jfc7Pd+j9QuQhrsEOzV8QYzHAC+e6KT0Q5Ce}
     ports:
