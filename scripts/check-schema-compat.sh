@@ -10,7 +10,7 @@
 #
 #   scripts/check-schema-compat.sh <base-ref>
 #
-# Needs Docker, curl, jq and openssl. On Apple Silicon, SQL Server runs under Rosetta.
+# Needs Docker, curl, jq, openssl and uuidgen. On Apple Silicon, SQL Server runs under Rosetta.
 
 set -euo pipefail
 
@@ -95,8 +95,8 @@ token() {
   curl --fail --silent -H "Content-Type: application/json" \
     -d "{\"email\":\"$1@example.com\",\"password\":\"${demo_password}\"}" "${api}/auth/login" | jq -r .accessToken
 }
-lead=$(token lead)
-developer=$(token developer)
+organizer=$(token organizer)
+door=$(token door)
 
 call() {
   local token=$1 method=$2 path=$3 body=${4:-}
@@ -105,36 +105,42 @@ call() {
   curl "${args[@]}" "${api}${path}" || fail "${method} ${path}"
 }
 
-# Writes an app, an environment and a release, ticks the checklist and ships.
-# The release body carries both the old single "version" field and the split
-# fields, so it works against the API before and after the version split.
+# Uses the API the way people do: an organizer publishes an event, a new
+# attendee signs up and claims two tickets, and the door checks one in.
 exercise() {
   local label=$1
-  local app env release
-  app=$(call "$lead" POST /apps "{\"name\":\"Compat ${label} ${RANDOM}\"}" | jq .id)
-  env=$(call "$lead" POST "/apps/${app}/environments" \
-    '{"name":"staging","apiUrl":"https://staging-api.example.com","isProduction":false}' | jq .id)
-  release=$(call "$developer" POST /releases \
-    "{\"appId\":${app},\"environmentId\":${env},\"platform\":\"android\",\"version\":\"2.4.0 (118)\",\"versionName\":\"2.4.0\",\"buildNumber\":118}")
-  local id; id=$(jq .id <<<"$release")
-  for item in $(jq '.checklist[].id' <<<"$release"); do
-    call "$developer" PUT "/releases/${id}/checklist/${item}" '{"isDone":true}' >/dev/null
-  done
-  [[ $(call "$developer" POST "/releases/${id}/ship" | jq -r .status) == "shipped" ]] || fail "release ${id} did not ship"
-  echo "   ${label}: created and shipped release ${id}"
+  local starts ends event type attendee tickets code outcome
+  starts=$(jq -nr '(now + 604800) | todate')
+  ends=$(jq -nr '(now + 615600) | todate')
+  event=$(call "$organizer" POST /events \
+    "{\"name\":\"Compat ${label} ${RANDOM}\",\"venue\":\"Main Hall\",\"startsAt\":\"${starts}\",\"endsAt\":\"${ends}\"}" | jq .id)
+  type=$(call "$organizer" POST "/events/${event}/ticket-types" '{"name":"General admission","capacity":10}' | jq .id)
+  call "$organizer" POST "/events/${event}/publish" >/dev/null
+
+  attendee=$(curl --fail --silent -H "Content-Type: application/json" \
+    -d "{\"email\":\"compat-${label}-${RANDOM}@example.com\",\"password\":\"${demo_password}\",\"displayName\":\"Compat\"}" \
+    "${api}/auth/register" | jq -r .accessToken) || fail "sign-up"
+  tickets=$(call "$attendee" POST "/events/${event}/tickets" "{\"ticketTypeId\":${type},\"quantity\":2}")
+  code=$(jq -r '.[0].code' <<<"$tickets")
+
+  outcome=$(call "$door" POST "/events/${event}/checkins" \
+    "{\"deviceId\":\"compat\",\"scans\":[{\"scanId\":\"$(uuidgen | tr '[:upper:]' '[:lower:]')\",\"code\":\"${code}\",\"scannedAt\":\"$(jq -nr 'now | todate')\"}]}" |
+    jq -r '.results[0].outcome')
+  [[ "$outcome" == admitted ]] || fail "check-in of a fresh ticket was ${outcome}"
+  echo "   ${label}: published event ${event}, claimed 2 tickets, admitted 1"
 }
 
 exercise "before"
-before_count=$(call "$developer" GET /releases | jq length)
+before_count=$(call "$organizer" GET /organizer/events | jq length)
 
 step "3/4 Running ${head_sha}'s migrations while the ${base_sha} API keeps serving"
 docker run --rm --network "${run_id}" "${run_id}-head-migrate" --connection "$connection"
 
 step "4/4 The ${base_sha} API still reads and writes on the new schema"
-after_count=$(call "$developer" GET /releases | jq length)
-[[ "$after_count" == "$before_count" ]] || fail "release list changed from ${before_count} to ${after_count}"
-call "$developer" GET "/releases/$(call "$developer" GET /releases | jq '.[0].id')" >/dev/null
-echo "   existing releases still read correctly (${after_count})"
+after_count=$(call "$organizer" GET /organizer/events | jq length)
+[[ "$after_count" == "$before_count" ]] || fail "event list changed from ${before_count} to ${after_count}"
+call "$door" GET "/events/$(call "$organizer" GET /organizer/events | jq '.[0].id')/checkins/summary" >/dev/null
+echo "   existing events and check-ins still read correctly (${after_count} events)"
 exercise "after"
 
 printf '\nOK: the API at %s works on the schema from %s.\n' "$base_sha" "$head_sha"

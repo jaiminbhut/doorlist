@@ -108,15 +108,32 @@ jobs:
           echo "API never became healthy"
           exit 1
 
-      - name: Sign in, then create and list an app through nginx
+      - name: Publish an event, claim a ticket and check it in, through nginx
         run: |
           base=http://localhost:8080/api
-          token=$(curl --fail --silent -H "Content-Type: application/json" \
-            -d '{"email":"lead@example.com","password":"Doorlist-demo-2026"}' "$base/auth/login" | jq -r .accessToken)
-          test "$(curl --silent --output /dev/null --write-out '%{http_code}' "$base/apps")" = 401
-          curl --fail --silent -H "Authorization: Bearer $token" -H "Content-Type: application/json" \
-            -d '{"name":"CI smoke"}' "$base/apps"
-          curl --fail --silent -H "Authorization: Bearer $token" "$base/apps" | grep -q '"CI smoke"'
+          json='Content-Type: application/json'
+          login() { curl --fail --silent -H "$json" -d "{\"email\":\"$1\",\"password\":\"Doorlist-demo-2026\"}" "$base/auth/login" | jq -r .accessToken; }
+          test "$(curl --silent --output /dev/null --write-out '%{http_code}' "$base/tickets/mine")" = 401
+
+          organizer=$(login organizer@example.com)
+          starts=$(jq -nr '(now + 604800) | todate')
+          ends=$(jq -nr '(now + 615600) | todate')
+          event=$(curl --fail --silent -H "Authorization: Bearer $organizer" -H "$json" \
+            -d "{\"name\":\"CI smoke\",\"venue\":\"Main Hall\",\"startsAt\":\"$starts\",\"endsAt\":\"$ends\"}" "$base/events" | jq .id)
+          type=$(curl --fail --silent -H "Authorization: Bearer $organizer" -H "$json" \
+            -d '{"name":"General admission","capacity":5}' "$base/events/$event/ticket-types" | jq .id)
+          curl --fail --silent -X POST -H "Authorization: Bearer $organizer" "$base/events/$event/publish" >/dev/null
+
+          attendee=$(curl --fail --silent -H "$json" \
+            -d '{"email":"ci@example.com","password":"Doorlist-demo-2026","displayName":"CI"}' "$base/auth/register" | jq -r .accessToken)
+          code=$(curl --fail --silent -H "Authorization: Bearer $attendee" -H "$json" \
+            -d "{\"ticketTypeId\":$type,\"quantity\":1}" "$base/events/$event/tickets" | jq -r '.[0].code')
+
+          door=$(login door@example.com)
+          outcome=$(curl --fail --silent -H "Authorization: Bearer $door" -H "$json" \
+            -d "{\"deviceId\":\"ci\",\"scans\":[{\"scanId\":\"$(uuidgen)\",\"code\":\"$code\",\"scannedAt\":\"$(jq -nr 'now | todate')\"}]}" \
+            "$base/events/$event/checkins" | jq -r '.results[0].outcome')
+          test "$outcome" = admitted
 
       - name: Browse events and fetch the ticket signing key without signing in
         run: |

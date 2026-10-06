@@ -121,11 +121,14 @@ echo "   staging is marked noindex"
 step "Check: write data in production"
 api=https://doorlist.localhost/api
 token=$(https -H 'Content-Type: application/json' \
-  -d "{\"email\":\"lead@example.com\",\"password\":\"$demo_password\"}" "$api/auth/login" | jq -r .accessToken)
+  -d "{\"email\":\"organizer@example.com\",\"password\":\"$demo_password\"}" "$api/auth/login" | jq -r .accessToken)
 [[ -n "$token" && "$token" != null ]] || fail "could not sign in to production"
-app_id=$(https -H "Authorization: Bearer $token" -H 'Content-Type: application/json' \
-  -d '{"name":"Rehearsal App"}' "$api/apps" | jq .id)
-echo "   created app $app_id as lead@example.com"
+starts=$(jq -nr '(now + 604800) | todate')
+ends=$(jq -nr '(now + 615600) | todate')
+event_id=$(https -H "Authorization: Bearer $token" -H 'Content-Type: application/json' \
+  -d "{\"name\":\"Rehearsal Event\",\"venue\":\"Main Hall\",\"startsAt\":\"$starts\",\"endsAt\":\"$ends\"}" "$api/events" | jq .id)
+[[ "$event_id" =~ ^[0-9]+$ ]] || fail "could not create an event"
+echo "   created event $event_id as organizer@example.com"
 
 step "Check: a production deploy with a staging settings file is refused"
 cp "$root/production/.env" "$root/production/.env.real"
@@ -140,8 +143,8 @@ echo "   refused: $(grep FAIL "$root/refused.log")"
 still_good() {
   [[ $(cat "$root/production/current-tag") == "$good" ]] || fail "current-tag moved off $good"
   [[ $(https "$api/health") == Healthy ]] || fail "production is down"
-  https -H "Authorization: Bearer $token" "$api/apps" | jq -e --argjson id "$app_id" 'any(.id == $id)' >/dev/null ||
-    fail "app $app_id is missing"
+  https -H "Authorization: Bearer $token" "$api/organizer/events" | jq -e --argjson id "$event_id" 'any(.id == $id)' >/dev/null ||
+    fail "event $event_id is missing"
 }
 
 step "Check: a release that fails before the swap leaves production alone"
@@ -150,7 +153,7 @@ if deploy production "$fails_early" >"$root/fails-early.log" 2>&1; then
 fi
 grep -q '==> 7/8' "$root/fails-early.log" && fail "it got as far as swapping containers"
 still_good
-echo "   $fails_early stopped at the seed step; $good never stopped serving, app $app_id is intact"
+echo "   $fails_early stopped at the seed step; $good never stopped serving, event $event_id is intact"
 
 step "Check: a release that crashes once serving rolls back to the last good one"
 if deploy production "$fails_serving" >"$root/fails-serving.log" 2>&1; then
@@ -159,7 +162,7 @@ fi
 grep -q "Rolling back to $good" "$root/fails-serving.log" || fail "no rollback happened"
 grep -q "$good is serving again" "$root/fails-serving.log" || fail "the rollback isn't serving"
 still_good
-echo "   $fails_serving failed its health check, $good is serving again, app $app_id is intact"
+echo "   $fails_serving failed its health check, $good is serving again, event $event_id is intact"
 
 step "Check: every deploy left a backup"
 backups=$(docker exec "$db" sh -c 'ls -1 /var/opt/mssql/backups/production/*.bak | wc -l')
@@ -172,7 +175,7 @@ as_app() {
   docker exec -e SQLCMDPASSWORD="$app_password" "$db" \
     /opt/mssql-tools18/bin/sqlcmd -C -S localhost -U doorlist_production_app -d Doorlist_production -b -h -1 -W -Q "$1"
 }
-as_app "SELECT COUNT(*) FROM Apps" >/dev/null || fail "the app login can't read"
+as_app "SELECT COUNT(*) FROM Events" >/dev/null || fail "the app login can't read"
 if as_app "CREATE TABLE RehearsalProbe (Id int)" >/dev/null 2>&1; then
   fail "the app login created a table"
 fi
@@ -181,6 +184,6 @@ echo "   SELECT works, CREATE TABLE is denied"
 printf '\nREHEARSAL PASSED\n'
 if [[ "${KEEP:-}" == 1 ]]; then
   echo "Still running: https://doorlist.localhost and https://doorlist-staging.localhost (accept the local certificate)."
-  echo "Sign in as lead@example.com with password $demo_password."
+  echo "Sign in as organizer@example.com, door@example.com or attendee@example.com with password $demo_password."
   echo "To remove it, run this script again without KEEP=1 (it starts by cleaning up), then let it finish."
 fi

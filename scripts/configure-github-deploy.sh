@@ -103,7 +103,7 @@ JSON
   else
     demo=$(secret)
     printf '%s' "$demo" | gh secret set DEMO_PASSWORD --repo "$repo" --env "$environment"
-    printf '%s demo password (lead@, developer@, viewer@example.com): %s\n' "$environment" "$demo" >>"$passwords_file"
+    printf '%s demo password (organizer@, door@, attendee@example.com): %s\n' "$environment" "$demo" >>"$passwords_file"
     echo "   DEMO_PASSWORD ($environment): generated, saved to $passwords_file"
   fi
 done
