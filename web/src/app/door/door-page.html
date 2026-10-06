@@ -23,63 +23,71 @@
     </div>
   </form>
 
-  <!-- Always in the page, so screen readers announce each new verdict. -->
-  <div [class]="'verdict ' + (tone() ?? 'ready')" role="status" aria-live="assertive">
-    @if (verdict(); as v) {
-      @switch (v.kind) {
-        @case ('server') {
-          @switch (v.result.outcome) {
-            @case ('admitted') {
-              <p class="decision">Admit</p>
-              <p class="reason">{{ v.result.holderName }}, {{ v.result.ticketTypeName }}</p>
+  <!--
+    The status region is always in the page, so screen readers announce each
+    new verdict. The verdict inside is rebuilt for every scan, which replays
+    its entrance even when two scans in a row get the same answer.
+  -->
+  <div role="status" aria-live="assertive">
+    @for (v of [verdict()]; track v) {
+      <div [class]="'verdict ' + (tone() ?? 'ready')">
+        @if (v) {
+          @switch (v.kind) {
+            @case ('server') {
+              @switch (v.result.outcome) {
+                @case ('admitted') {
+                  <p class="decision">Admit</p>
+                  <p class="reason">{{ v.result.holderName }}, {{ v.result.ticketTypeName }}</p>
+                }
+                @case ('alreadyAdmitted') {
+                  <p class="decision">Don't admit</p>
+                  <p class="reason">
+                    Already used: {{ v.result.holderName }} was admitted at
+                    {{ v.result.admittedAtDoor }}, {{ v.result.admittedAt | date: 'HH:mm' }}.
+                  </p>
+                }
+                @case ('wrongEvent') {
+                  <p class="decision">Don't admit</p>
+                  <p class="reason">Wrong event: a real ticket, for a different event.</p>
+                }
+                @case ('invalid') {
+                  <p class="decision">Don't admit</p>
+                  <p class="reason">Not a valid ticket.</p>
+                }
+              }
             }
-            @case ('alreadyAdmitted') {
-              <p class="decision">Don't admit</p>
-              <p class="reason">
-                Already used: {{ v.result.holderName }} was admitted at
-                {{ v.result.admittedAtDoor }}, {{ v.result.admittedAt | date: 'HH:mm' }}.
-              </p>
+            @case ('offline') {
+              @switch (v.outcome) {
+                @case ('admitted') {
+                  <p class="decision">Admit</p>
+                  <p class="reason">
+                    Offline: a genuine ticket for this event. It will be recorded when the
+                    connection is back.
+                  </p>
+                }
+                @case ('alreadyAdmittedHere') {
+                  <p class="decision">Don't admit</p>
+                  <p class="reason">Already used at this door.</p>
+                }
+                @case ('wrongEvent') {
+                  <p class="decision">Don't admit</p>
+                  <p class="reason">Wrong event: a real ticket, for a different event.</p>
+                }
+                @case ('invalid') {
+                  <p class="decision">Don't admit</p>
+                  <p class="reason">Not a valid ticket.</p>
+                }
+              }
             }
-            @case ('wrongEvent') {
-              <p class="decision">Don't admit</p>
-              <p class="reason">Wrong event: a real ticket, for a different event.</p>
-            }
-            @case ('invalid') {
-              <p class="decision">Don't admit</p>
-              <p class="reason">Not a valid ticket.</p>
+            @case ('error') {
+              <p class="decision">Can't check</p>
+              <p class="reason">{{ v.message }}</p>
             }
           }
+        } @else {
+          <p class="reason">Ready for the first ticket.</p>
         }
-        @case ('offline') {
-          @switch (v.outcome) {
-            @case ('admitted') {
-              <p class="decision">Admit</p>
-              <p class="reason">
-                Offline: a genuine ticket for this event. It will be recorded when the connection is
-                back.
-              </p>
-            }
-            @case ('alreadyAdmittedHere') {
-              <p class="decision">Don't admit</p>
-              <p class="reason">Already used at this door.</p>
-            }
-            @case ('wrongEvent') {
-              <p class="decision">Don't admit</p>
-              <p class="reason">Wrong event: a real ticket, for a different event.</p>
-            }
-            @case ('invalid') {
-              <p class="decision">Don't admit</p>
-              <p class="reason">Not a valid ticket.</p>
-            }
-          }
-        }
-        @case ('error') {
-          <p class="decision">Can't check</p>
-          <p class="reason">{{ v.message }}</p>
-        }
-      }
-    } @else {
-      <p class="reason">Ready for the first ticket.</p>
+      </div>
     }
   </div>
 

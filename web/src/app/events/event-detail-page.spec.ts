@@ -55,10 +55,10 @@ describe('EventDetailPage', () => {
     page().querySelector<HTMLButtonElement>('.claim-form button[type="submit"]')!.click();
     const request = http.expectOne({ method: 'POST', url: '/api/events/1/tickets' });
     expect(request.request.body).toEqual({ ticketTypeId: 10, quantity: 2 });
-    request.flush([]);
+    request.flush([{ id: 't1' }, { id: 't2' }]);
     await settle();
 
-    expect(navigate).toHaveBeenCalledWith(['/tickets']);
+    expect(navigate).toHaveBeenCalledWith(['/tickets'], { state: { claimed: ['t1', 't2'] } });
   });
 
   it("explains the API's refusal, such as the per-attendee limit", async () => {

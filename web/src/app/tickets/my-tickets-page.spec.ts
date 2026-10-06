@@ -1,7 +1,8 @@
 import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { provideRouter } from '@angular/router';
+import { Router, provideRouter } from '@angular/router';
+import { RouterTestingHarness } from '@angular/router/testing';
 import { MyTicketsPage } from './my-tickets-page';
 
 // Mock qrcode the way the production build exposes this CommonJS package:
@@ -77,5 +78,34 @@ describe('MyTicketsPage', () => {
 
     expect(page().querySelector('.qr-fallback code')?.textContent).toBe(ticket.code);
     expect(page().textContent).not.toContain('Loading your tickets');
+  });
+
+  it('marks the tickets just claimed, and says how many were added', async () => {
+    toString.mockResolvedValue('<svg xmlns="http://www.w3.org/2000/svg"></svg>');
+    TestBed.resetTestingModule();
+    TestBed.configureTestingModule({
+      providers: [
+        provideRouter([{ path: 'tickets', component: MyTicketsPage }]),
+        provideHttpClient(),
+        provideHttpClientTesting(),
+      ],
+    });
+    const harness = await RouterTestingHarness.create();
+    http = TestBed.inject(HttpTestingController);
+    const earlier = { ...ticket, id: '0192c3d4-0000-7000-8000-000000000002' };
+
+    await TestBed.inject(Router).navigate(['/tickets'], { state: { claimed: [ticket.id] } });
+    harness.detectChanges();
+    http.expectOne('/api/tickets/mine').flush([earlier, ticket]);
+    harness.detectChanges();
+    await harness.fixture.whenStable();
+
+    const element = harness.routeNativeElement!;
+    const marked = [...element.querySelectorAll('.ticket.just-claimed')];
+    expect(marked).toHaveLength(1);
+    expect(element.querySelectorAll('.ticket')[1]).toBe(marked[0]);
+    expect(element.querySelector('.added')?.textContent).toContain(
+      '1 ticket added for Tech Talks Night.',
+    );
   });
 });

@@ -59,7 +59,11 @@ export class EventDetailPage implements OnInit {
     const { ticketTypeId, quantity } = this.form.getRawValue();
 
     this.ticketsApi.claim(event.id, ticketTypeId!, quantity).subscribe({
-      next: () => void this.router.navigate(['/tickets']),
+      // My tickets shows which ones are new.
+      next: (tickets) =>
+        void this.router.navigate(['/tickets'], {
+          state: { claimed: tickets.map((ticket) => ticket.id) },
+        }),
       error: (error: unknown) => {
         this.claimError.set(problemTitle(error) ?? 'Could not claim tickets. Try again.');
         this.claiming.set(false);

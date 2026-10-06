@@ -8,9 +8,16 @@
 } @else if (loadError(); as message) {
   <p class="error" role="alert">{{ message }}</p>
 } @else {
+  @if (added(); as message) {
+    <p class="added" role="status">{{ message }}</p>
+  }
   <ul class="tickets" aria-labelledby="tickets-heading">
     @for (ticket of tickets(); track ticket.id) {
-      <li class="ticket">
+      <li
+        class="ticket"
+        [class.just-claimed]="claimed.has(ticket.id)"
+        [style.animation-delay.ms]="claimed.has(ticket.id) ? arrivalDelay(ticket) : null"
+      >
         <div class="ticket-body">
           <p class="ticket-when">{{ ticket.startsAt | date: 'EEEE d MMMM y, HH:mm' }}</p>
           <a class="ticket-event" [routerLink]="['/events', ticket.eventId]">{{

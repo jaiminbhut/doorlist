@@ -1,6 +1,6 @@
 import { DatePipe } from '@angular/common';
-import { Component, OnInit, inject, signal } from '@angular/core';
-import { RouterLink } from '@angular/router';
+import { Component, OnInit, computed, inject, signal } from '@angular/core';
+import { Router, RouterLink } from '@angular/router';
 import { Ticket, TicketsApi } from './tickets-api';
 
 interface TicketView extends Ticket {
@@ -19,9 +19,33 @@ interface TicketView extends Ticket {
 export class MyTicketsPage implements OnInit {
   private readonly api = inject(TicketsApi);
 
+  /**
+   * Tickets claimed on the way here (navigation state from the event page).
+   * Read once: a reload or a later visit shows nothing as new.
+   */
+  protected readonly claimed: ReadonlySet<string> = new Set(
+    (inject(Router).currentNavigation()?.extras.state?.['claimed'] as string[] | undefined) ?? [],
+  );
+
   protected readonly tickets = signal<TicketView[]>([]);
   protected readonly loading = signal(true);
   protected readonly loadError = signal<string | null>(null);
+
+  /** "2 tickets added for Friday Night Jazz.", after a claim. */
+  protected readonly added = computed(() => {
+    const added = this.tickets().filter((ticket) => this.claimed.has(ticket.id));
+    if (added.length === 0) {
+      return null;
+    }
+    const count = added.length === 1 ? '1 ticket' : `${added.length} tickets`;
+    return `${count} added for ${added[0].eventName}.`;
+  });
+
+  /** Staggers the new tickets' entrance, in list order. */
+  protected arrivalDelay(ticket: TicketView): number {
+    const newOnes = this.tickets().filter((view) => this.claimed.has(view.id));
+    return newOnes.indexOf(ticket) * 90;
+  }
 
   ngOnInit(): void {
     this.api.mine().subscribe({
