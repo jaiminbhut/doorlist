@@ -28,3 +28,18 @@
   background: #ffffff;
   border-radius: 8px;
 }
+
+.qr-pending {
+  background: var(--border);
+}
+
+.qr-fallback {
+  max-width: 260px;
+  font-size: 0.875rem;
+}
+
+.qr-fallback code {
+  display: block;
+  margin-top: 4px;
+  word-break: break-all;
+}
