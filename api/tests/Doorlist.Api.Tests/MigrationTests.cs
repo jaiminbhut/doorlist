@@ -17,6 +17,8 @@ public sealed class MigrationTests(DoorlistApiFactory factory)
     private const string BeforeVersionSplit = "20261002121352_AddIdentityEnvironmentsAndReleases";
     private const string Expand = "20261002125507_SplitReleaseVersionExpand";
     private const string Switch = "20261002125953_SplitReleaseVersionSwitch";
+    private const string VersionContract = "20261002130728_SplitReleaseVersionContract";
+    private const string TrackerSwitch = "20261006115448_RetireReleaseTrackerSwitch";
 
     public static TheoryData<string> OldVersions { get; } =
     [
@@ -100,7 +102,7 @@ public sealed class MigrationTests(DoorlistApiFactory factory)
     public async Task ContractDropsVersionAndItsRollbackRebuildsIt()
     {
         await using var db = CreateFreshDatabase();
-        await db.GetService<IMigrator>().MigrateAsync();
+        await db.GetService<IMigrator>().MigrateAsync(VersionContract);
 
         await db.Database.ExecuteSqlRawAsync("""
             INSERT INTO Apps (Name, CreatedAt) VALUES (N'Field App', SYSDATETIMEOFFSET());
@@ -121,6 +123,40 @@ public sealed class MigrationTests(DoorlistApiFactory factory)
         Assert.Equal("7.0.0 (12)", version);
         await db.Database.EnsureDeletedAsync();
     }
+
+    [Fact]
+    public async Task RetiringTheTrackerDropsItsTablesAndOnlyTheDemoUsersMadeForIt()
+    {
+        await using var db = CreateFreshDatabase();
+        await db.GetService<IMigrator>().MigrateAsync(TrackerSwitch);
+
+        // As a database looked after the switch step: the tracker's roles and
+        // demo users, one of which has since been made an organizer.
+        await db.Database.ExecuteSqlRawAsync("""
+            INSERT INTO AspNetRoles (Id, Name, NormalizedName) VALUES
+                (N'r-lead', N'Lead', N'LEAD'), (N'r-dev', N'Developer', N'DEVELOPER'), (N'r-org', N'Organizer', N'ORGANIZER');
+            INSERT INTO AspNetUsers (Id, UserName, NormalizedUserName, Email, NormalizedEmail, EmailConfirmed, PhoneNumberConfirmed,
+                                     TwoFactorEnabled, LockoutEnabled, AccessFailedCount, DisplayName) VALUES
+                (N'u-lead', N'lead@example.com', N'LEAD@EXAMPLE.COM', N'lead@example.com', N'LEAD@EXAMPLE.COM', 1, 0, 0, 1, 0, N'Demo Lead'),
+                (N'u-dev', N'developer@example.com', N'DEVELOPER@EXAMPLE.COM', N'developer@example.com', N'DEVELOPER@EXAMPLE.COM', 1, 0, 0, 1, 0, N'Demo Developer');
+            INSERT INTO AspNetUserRoles (UserId, RoleId) VALUES (N'u-lead', N'r-lead'), (N'u-dev', N'r-dev'), (N'u-dev', N'r-org');
+            INSERT INTO Apps (Name, CreatedAt) VALUES (N'Field App', SYSDATETIMEOFFSET());
+            """);
+
+        await db.GetService<IMigrator>().MigrateAsync();
+
+        Assert.Equal(0, await CountAsync(db, "SELECT COUNT(*) AS Value FROM sys.tables WHERE name IN ('Apps', 'Environments', 'Releases', 'ChecklistItems')"));
+        Assert.Equal(["Organizer"], await db.Database.SqlQuery<string>($"SELECT Name AS Value FROM AspNetRoles").ToListAsync());
+        Assert.Equal(["developer@example.com"], await db.Database.SqlQuery<string>($"SELECT Email AS Value FROM AspNetUsers").ToListAsync());
+
+        await db.GetService<IMigrator>().MigrateAsync(TrackerSwitch);
+
+        Assert.Equal(4, await CountAsync(db, "SELECT COUNT(*) AS Value FROM sys.tables WHERE name IN ('Apps', 'Environments', 'Releases', 'ChecklistItems')"));
+        await db.Database.EnsureDeletedAsync();
+    }
+
+    private static Task<int> CountAsync(DoorlistDbContext db, string sql) =>
+        db.Database.SqlQueryRaw<int>(sql).SingleAsync();
 
     private DoorlistDbContext CreateFreshDatabase()
     {

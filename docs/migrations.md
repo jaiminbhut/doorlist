@@ -131,3 +131,13 @@ The checks that used the release tracker change first:
 - the deploy rehearsal
 
 They now publish an event, claim tickets and check one in. If they didn't, the next step's check would run against an API that no longer has the endpoints it calls.
+
+### Contract
+
+Migration `RetireReleaseTrackerContract` drops the four tables. EF generates an empty migration, because the model stopped mapping them in the switch step, so the `DropTable` calls are written by hand, children first. The API on `main` (the switch step) doesn't map them, so the compatibility check passes.
+
+The same migration deletes the `Lead`, `Developer` and `Viewer` roles, and the demo users that were seeded for them. A demo user is kept if it has since been given a Doorlist role or holds tickets.
+
+`Down` recreates the four tables, empty, using EF's own `CreateTable` code for them. That lets `RetireReleaseTrackerSwitch` and older migrations roll back from here. Deleted rows, roles and users aren't restored; restoring those is what backups are for.
+
+One historical test had to change. The version-split contract test migrated "to the latest", then wrote to `Releases`. After this step, "latest" has no `Releases` table, so the test now targets its own migration by name. Tests of historical migrations should always name the migration they test.
