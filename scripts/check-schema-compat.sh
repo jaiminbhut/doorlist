@@ -16,7 +16,7 @@ set -euo pipefail
 
 base_ref=${1:?usage: scripts/check-schema-compat.sh <base-ref>}
 root=$(git rev-parse --show-toplevel)
-run_id="shiplog-compat-$$"
+run_id="doorlist-compat-$$"
 work=$(mktemp -d)
 port=${COMPAT_API_PORT:-5099}
 api="http://localhost:${port}/api"
@@ -24,7 +24,11 @@ api="http://localhost:${port}/api"
 sa_password="Compat_check_Passw0rd"
 demo_password="Compat-demo-password-1"
 signing_key="compat-check-signing-key-at-least-32-chars"
-connection="Server=${run_id}-db;Database=Shiplog;User Id=sa;Password=${sa_password};TrustServerCertificate=True"
+connection="Server=${run_id}-db;Database=Doorlist;User Id=sa;Password=${sa_password};TrustServerCertificate=True"
+# The base may be from before the rename (ADR 6), when the API read its
+# connection string as ConnectionStrings:Shiplog. Pass both names, so the
+# check can run an API from either side of the rename.
+api_settings=(-e "ConnectionStrings__Doorlist=$connection" -e "ConnectionStrings__Shiplog=$connection")
 
 cleanup() {
   docker rm -f "${run_id}-db" "${run_id}-api" >/dev/null 2>&1 || true
@@ -73,12 +77,12 @@ wait_until "SQL Server" docker exec "${run_id}-db" \
 
 step "1/4 Schema as it is today: ${base_sha}'s migrations and demo users"
 docker run --rm --network "${run_id}" "${run_id}-base-migrate" --connection "$connection"
-docker run --rm --network "${run_id}" -e ConnectionStrings__Shiplog="$connection" -e Demo__Password="$demo_password" \
+docker run --rm --network "${run_id}" "${api_settings[@]}" -e Demo__Password="$demo_password" \
   "${run_id}-base-api" seed-demo-users
 
 step "2/4 Starting the ${base_sha} API and writing data with it"
 docker run -d --name "${run_id}-api" --network "${run_id}" -p "${port}:8080" \
-  -e ConnectionStrings__Shiplog="$connection" -e Auth__Jwt__SigningKey="$signing_key" \
+  "${api_settings[@]}" -e Auth__Jwt__SigningKey="$signing_key" \
   "${run_id}-base-api" >/dev/null
 wait_until "the base API" curl --fail --silent "${api}/health"
 

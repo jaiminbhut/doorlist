@@ -26,6 +26,7 @@ concurrency:
 jobs:
   images:
     name: Build and push images
+    timeout-minutes: 30
     if: >-
       vars.DEPLOY_ENABLED == 'true' &&
       (github.event_name == 'workflow_dispatch' ||
@@ -59,7 +60,7 @@ jobs:
           target: api
           platforms: linux/amd64
           push: true
-          tags: ghcr.io/${{ github.repository_owner }}/shiplog-api:${{ steps.tag.outputs.tag }}
+          tags: ghcr.io/${{ github.repository_owner }}/doorlist-api:${{ steps.tag.outputs.tag }}
           labels: org.opencontainers.image.source=https://github.com/${{ github.repository }}
           cache-from: type=gha,scope=api
           cache-to: type=gha,scope=api,mode=max
@@ -71,7 +72,7 @@ jobs:
           target: migrate
           platforms: linux/amd64
           push: true
-          tags: ghcr.io/${{ github.repository_owner }}/shiplog-migrate:${{ steps.tag.outputs.tag }}
+          tags: ghcr.io/${{ github.repository_owner }}/doorlist-migrate:${{ steps.tag.outputs.tag }}
           labels: org.opencontainers.image.source=https://github.com/${{ github.repository }}
           cache-from: type=gha,scope=api
 
@@ -81,7 +82,7 @@ jobs:
           context: web
           platforms: linux/amd64
           push: true
-          tags: ghcr.io/${{ github.repository_owner }}/shiplog-web:${{ steps.tag.outputs.tag }}
+          tags: ghcr.io/${{ github.repository_owner }}/doorlist-web:${{ steps.tag.outputs.tag }}
           labels: org.opencontainers.image.source=https://github.com/${{ github.repository }}
           cache-from: type=gha,scope=web
           cache-to: type=gha,scope=web,mode=max

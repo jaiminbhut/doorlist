@@ -1,12 +1,12 @@
-# Shiplog
+# Doorlist
 
-A release tracker for teams that ship mobile and web apps. It keeps track of each app, its environments, its releases and the checklist each release has to pass. That checklist includes the check that catches the classic mistake of a staging build going to production: confirming the target environment and API URL before anything ships.
+Free event tickets with door check-in. Organizers create events with ticket types and capacities. Attendees sign up and claim tickets, each a QR code the server signs so it can be checked without a connection. Door staff scan tickets, offline if the venue's network drops, and scans sync when it comes back.
 
-Shiplog is also a public reference project. Alongside the features, it shows how the whole product is built and run: an Angular front end, an ASP.NET Core API on SQL Server, EF Core migrations that run as their own deploy step, Docker, CI on every pull request, and the decisions behind each of these, written down.
+Doorlist is also a public reference project. Alongside the features, it shows how the whole product is built and run: an Angular front end, an ASP.NET Core API on SQL Server, EF Core migrations that run as their own deploy step and are checked against the running API, Docker, CI on every pull request, a rehearsed deploy pipeline, and the decisions behind each of these, written down.
 
-> **Status:** milestones 1, 2 and 4 are done. Milestone 3's deploy pipeline is built and rehearsed, and waiting for its server. See the [roadmap](#roadmap).
+> **Status:** changing course. This project started as Shiplog, a release tracker; [ADR 6](docs/adr/0006-from-release-tracking-to-event-ticketing.md) explains why it's becoming Doorlist. The rename is done; the events and tickets come next, and the release tracker is retired in steps afterwards. Until then, the app below is still the release tracker.
 
-## What it does
+## What it does today: the release tracker
 
 - **Apps and environments.** A lead adds each app the team ships, and its environments, each with the API URL a build for it must point at. Production environments are flagged.
 - **Releases with a checklist.** A release is one version of an app, for one platform, going to one environment. It starts with a checklist built from its environment: *"Build is configured for the production environment"*, *"Build points at https://api.example.com/"*, release notes, testing.
@@ -49,7 +49,7 @@ docker compose up --build
 - Web: http://localhost:8080
 - API: http://localhost:5080. `/api/health` is open; everything else needs a token from `POST /api/auth/login`.
 
-Local demo accounts, all with the password `Shiplog-demo-2026`:
+Local demo accounts, all with the password `Doorlist-demo-2026`:
 
 | Email | Role |
 |---|---|
@@ -61,8 +61,8 @@ Local demo accounts, all with the password `Shiplog-demo-2026`:
 
 ```
 api/                     ASP.NET Core API, EF Core, migrations, tests
-  src/Shiplog.Api/
-  tests/Shiplog.Api.Tests/
+  src/Doorlist.Api/
+  tests/Doorlist.Api.Tests/
 web/                     Angular app
 docs/adr/                Architecture decision records
 deploy/                  Server setup, Caddy, compose files and the deploy script
@@ -76,10 +76,12 @@ docker-compose.yml       Local stack
 | Milestone | Scope |
 |---|---|
 | 1. Skeleton ✅ | `docker compose up` runs end to end; CI on every pull request |
-| 2. Domain and auth ✅ | Apps, environments, releases, checklists; ASP.NET Core Identity + JWT with roles; Angular release board |
-| 3. Deploy pipeline (built, waiting for the server) | Images to GHCR; release workflow with env verification, DB backup, migration bundle, API rollout and health check; staging and production; Content-Security-Policy |
-| 4. Expand/contract ✅ | A CI check that the running API survives each PR's migrations; a breaking schema change (splitting `Version`) shipped in three steps that each pass it, documented in [`docs/migrations.md`](docs/migrations.md) |
-| 5. Polish | Demo account, screenshots, `v1.0.0` |
+| 2. Domain and auth ✅ | The release tracker: apps, environments, releases, checklists; ASP.NET Core Identity + JWT with roles |
+| 3. Deploy pipeline (built, waiting for the server) | Images to GHCR; staging then production with approval; settings check, backup, migrations, health check and rollback; Content-Security-Policy |
+| 4. Expand/contract ✅ | A CI check that the running API survives each PR's migrations; a breaking schema change shipped in three steps that each pass it ([`docs/migrations.md`](docs/migrations.md)) |
+| 5. Doorlist | Rename ✅; events, ticket types and attendee sign-up; claiming tickets without overselling; signed QR tickets; door check-in with offline sync; the release tracker retired in steps ([ADR 6](docs/adr/0006-from-release-tracking-to-event-ticketing.md)) |
+| 6. Mobile | React Native (Expo) app: an attendee's tickets, and a door scanner that works offline |
+| 7. Polish | Live demo, screenshots, `v1.0.0` |
 
 ## Contributing
 

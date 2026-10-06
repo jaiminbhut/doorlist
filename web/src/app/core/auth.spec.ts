@@ -32,12 +32,12 @@ describe('AuthService', () => {
     expect(auth.token()).toBe('abc');
     expect(auth.canManageApps()).toBe(true);
     expect(auth.canWorkOnReleases()).toBe(true);
-    expect(sessionStorage.getItem('shiplog.session')).toContain('abc');
+    expect(sessionStorage.getItem('doorlist.session')).toContain('abc');
   });
 
   it('gives a developer release work but not app management', () => {
     sessionStorage.setItem(
-      'shiplog.session',
+      'doorlist.session',
       JSON.stringify({
         accessToken: 't',
         expiresAt: hourFromNow(),
@@ -52,7 +52,7 @@ describe('AuthService', () => {
 
   it('ignores a stored session that has expired', () => {
     sessionStorage.setItem(
-      'shiplog.session',
+      'doorlist.session',
       JSON.stringify({
         accessToken: 'old',
         expiresAt: '2000-01-01T00:00:00Z',
@@ -67,7 +67,7 @@ describe('AuthService', () => {
 
   it('signs out and forgets the session', () => {
     sessionStorage.setItem(
-      'shiplog.session',
+      'doorlist.session',
       JSON.stringify({
         accessToken: 't',
         expiresAt: hourFromNow(),
@@ -79,6 +79,6 @@ describe('AuthService', () => {
     auth.signOut();
 
     expect(auth.token()).toBeNull();
-    expect(sessionStorage.getItem('shiplog.session')).toBeNull();
+    expect(sessionStorage.getItem('doorlist.session')).toBeNull();
   });
 });

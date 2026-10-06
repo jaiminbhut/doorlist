@@ -1,6 +1,6 @@
-# Deploying Shiplog
+# Deploying Doorlist
 
-Shiplog runs on one small Linux server ([ADR 5](../docs/adr/0005-single-server-deploy-with-docker-compose.md)). GitHub Actions deploys every green commit on `main` to **staging**, then to **production** once a reviewer approves.
+Doorlist runs on one small Linux server ([ADR 5](../docs/adr/0005-single-server-deploy-with-docker-compose.md)). GitHub Actions deploys every green commit on `main` to **staging**, then to **production** once a reviewer approves.
 
 ```mermaid
 flowchart LR
@@ -17,7 +17,7 @@ flowchart LR
     internet([Internet]) -- "443" --> caddy["Caddy<br/>HTTPS, routing by host"]
     caddy --> pweb["production web<br/>nginx + Angular"] --> papi["production API"]
     caddy --> sweb["staging web"] --> sapi["staging API"]
-    papi -- "app login" --> db[("SQL Server<br/>Shiplog_production<br/>Shiplog_staging")]
+    papi -- "app login" --> db[("SQL Server<br/>Doorlist_production<br/>Doorlist_staging")]
     sapi -- "app login" --> db
 ```
 
@@ -44,21 +44,21 @@ scripts/rehearse-deploy.sh
 
 ## First-time setup
 
-1. **Server.** Ubuntu 24.04 LTS on x86-64 (SQL Server has no ARM image), at least 2 GB of RAM, with ports 22, 80 and 443 open. Point `shiplog.devtownhall.com` and `shiplog-staging.devtownhall.com` at it with DNS-only A records, so Caddy can get certificates from Let's Encrypt.
+1. **Server.** Ubuntu 24.04 LTS on x86-64 (SQL Server has no ARM image), at least 2 GB of RAM, with ports 22, 80 and 443 open. Point `doorlist.devtownhall.com` and `doorlist-staging.devtownhall.com` at it with DNS-only A records, so Caddy can get certificates from Let's Encrypt.
 2. **Deploy key.** Create a key that only GitHub Actions uses:
    ```sh
-   ssh-keygen -t ed25519 -N "" -C shiplog-deploy -f shiplog-deploy
+   ssh-keygen -t ed25519 -N "" -C doorlist-deploy -f doorlist-deploy
    ```
 3. **Bootstrap the server**, as the default `ubuntu` user:
    ```sh
-   ssh ubuntu@<server> 'bash -s' < deploy/server/bootstrap.sh "$(cat shiplog-deploy.pub)"
+   ssh ubuntu@<server> 'bash -s' < deploy/server/bootstrap.sh "$(cat doorlist-deploy.pub)"
    ```
    This installs Docker, adds swap on small servers, turns on the firewall and automatic security updates, allows SSH keys only, and creates the `deploy` user.
 4. **Configure GitHub:** environments, approval, variables and generated secrets:
    ```sh
-   scripts/configure-github-deploy.sh <server> shiplog-deploy
+   scripts/configure-github-deploy.sh <server> doorlist-deploy
    ```
-   Then delete the local `shiplog-deploy` private key; GitHub has it.
+   Then delete the local `doorlist-deploy` private key; GitHub has it.
 5. **Turn deploys on**, and run the first one:
    ```sh
    scripts/configure-github-deploy.sh --enable
@@ -82,27 +82,27 @@ scripts/rehearse-deploy.sh
 
 ## Operating it
 
-Sign in to the server as `ubuntu` with your admin key. The deploy files live in `/opt/shiplog`.
+Sign in to the server as `ubuntu` with your admin key. The deploy files live in `/opt/doorlist`.
 
 - **What's running:**
   ```sh
-  cat /opt/shiplog/production/current-tag
+  cat /opt/doorlist/production/current-tag
   docker compose ls
   ```
 - **Roll back by hand** to an earlier commit's images. This is safe for any version from the last few merges, because each passed the compatibility check:
   ```sh
-  sudo -u deploy /opt/shiplog/deploy/scripts/deploy.sh production <older-tag>
+  sudo -u deploy /opt/doorlist/deploy/scripts/deploy.sh production <older-tag>
   ```
-  The older migration bundle finds the newer migrations already applied and changes nothing: bundles only migrate forward. If that tag's images are no longer on the server, they come from GHCR. Either make the three `shiplog-*` packages public (they're built from this public repo), or `docker login ghcr.io` first with a token that can read packages.
+  The older migration bundle finds the newer migrations already applied and changes nothing: bundles only migrate forward. If that tag's images are no longer on the server, they come from GHCR. Either make the three `doorlist-*` packages public (they're built from this public repo), or `docker login ghcr.io` first with a token that can read packages.
 - **List backups:**
   ```sh
-  docker exec shiplog-shared-db-1 ls -lt /var/opt/mssql/backups/production
+  docker exec doorlist-shared-db-1 ls -lt /var/opt/mssql/backups/production
   ```
 - **Restore a backup:** stop the API, restore, then start it again:
   ```sh
-  docker compose -p shiplog-production stop api
-  docker exec -it shiplog-shared-db-1 sh -c 'SQLCMDPASSWORD="$MSSQL_SA_PASSWORD" /opt/mssql-tools18/bin/sqlcmd -C -S localhost -U sa \
-    -Q "RESTORE DATABASE [Shiplog_production] FROM DISK = N'"'"'/var/opt/mssql/backups/production/<file>.bak'"'"' WITH REPLACE"'
-  docker compose -p shiplog-production start api
+  docker compose -p doorlist-production stop api
+  docker exec -it doorlist-shared-db-1 sh -c 'SQLCMDPASSWORD="$MSSQL_SA_PASSWORD" /opt/mssql-tools18/bin/sqlcmd -C -S localhost -U sa \
+    -Q "RESTORE DATABASE [Doorlist_production] FROM DISK = N'"'"'/var/opt/mssql/backups/production/<file>.bak'"'"' WITH REPLACE"'
+  docker compose -p doorlist-production start api
   ```
 - **Off-server copies:** these backups live on the server's own disk. Turn on Lightsail's automatic daily snapshots, or copy the `.bak` files elsewhere, so a lost server doesn't mean lost data.

@@ -5,12 +5,12 @@
 # .env file (see .env.example); deployed environments use their own secrets
 # and a non-SA database login (milestone 3).
 #
-# Demo users (password: SHIPLOG_DEMO_PASSWORD, default Shiplog-demo-2026):
+# Demo users (password: DOORLIST_DEMO_PASSWORD, default Doorlist-demo-2026):
 #   lead@example.com, developer@example.com, viewer@example.com
 
-name: shiplog
+name: doorlist
 
-x-db-connection: &db-connection "Server=db;Database=Shiplog;User Id=sa;Password=${MSSQL_SA_PASSWORD:-Shiplog_local_Passw0rd};TrustServerCertificate=True"
+x-db-connection: &db-connection "Server=db;Database=Doorlist;User Id=sa;Password=${MSSQL_SA_PASSWORD:-Doorlist_local_Passw0rd};TrustServerCertificate=True"
 
 services:
   db:
@@ -21,7 +21,7 @@ services:
     environment:
       ACCEPT_EULA: "Y"
       MSSQL_PID: Express
-      MSSQL_SA_PASSWORD: ${MSSQL_SA_PASSWORD:-Shiplog_local_Passw0rd}
+      MSSQL_SA_PASSWORD: ${MSSQL_SA_PASSWORD:-Doorlist_local_Passw0rd}
     ports:
       - "1433:1433"
     volumes:
@@ -44,26 +44,26 @@ services:
 
   seed:
     # The API image, run once with a command: creates the roles and demo users.
-    image: shiplog-api:local
+    image: doorlist-api:local
     build:
       context: ./api
       target: api
     command: ["seed-demo-users"]
     environment:
-      ConnectionStrings__Shiplog: *db-connection
-      Demo__Password: ${SHIPLOG_DEMO_PASSWORD:-Shiplog-demo-2026}
+      ConnectionStrings__Doorlist: *db-connection
+      Demo__Password: ${DOORLIST_DEMO_PASSWORD:-Doorlist-demo-2026}
     depends_on:
       migrate:
         condition: service_completed_successfully
 
   api:
-    image: shiplog-api:local
+    image: doorlist-api:local
     build:
       context: ./api
       target: api
     environment:
-      ConnectionStrings__Shiplog: *db-connection
-      Auth__Jwt__SigningKey: ${SHIPLOG_JWT_SIGNING_KEY:-local-development-signing-key-not-for-production}
+      ConnectionStrings__Doorlist: *db-connection
+      Auth__Jwt__SigningKey: ${DOORLIST_JWT_SIGNING_KEY:-local-development-signing-key-not-for-production}
     ports:
       - "5080:8080"
     depends_on:

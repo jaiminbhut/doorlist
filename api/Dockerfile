@@ -9,13 +9,13 @@
 FROM mcr.microsoft.com/dotnet/sdk:10.0 AS build
 WORKDIR /src
 COPY global.json Directory.Build.props dotnet-tools.json .editorconfig ./
-COPY src/Shiplog.Api/Shiplog.Api.csproj src/Shiplog.Api/
-RUN dotnet restore src/Shiplog.Api/Shiplog.Api.csproj && dotnet tool restore
+COPY src/Doorlist.Api/Doorlist.Api.csproj src/Doorlist.Api/
+RUN dotnet restore src/Doorlist.Api/Doorlist.Api.csproj && dotnet tool restore
 COPY src/ src/
-RUN dotnet publish src/Shiplog.Api -c Release -o /out/api --no-restore
+RUN dotnet publish src/Doorlist.Api -c Release -o /out/api --no-restore
 
 FROM build AS bundle
-RUN dotnet ef migrations bundle --project src/Shiplog.Api --configuration Release -o /out/efbundle
+RUN dotnet ef migrations bundle --project src/Doorlist.Api --configuration Release -o /out/efbundle
 
 FROM mcr.microsoft.com/dotnet/aspnet:10.0 AS migrate
 WORKDIR /migrate
@@ -29,4 +29,4 @@ WORKDIR /app
 COPY --from=build /out/api ./
 USER $APP_UID
 EXPOSE 8080
-ENTRYPOINT ["dotnet", "Shiplog.Api.dll"]
+ENTRYPOINT ["dotnet", "Doorlist.Api.dll"]

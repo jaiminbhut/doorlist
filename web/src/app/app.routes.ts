@@ -7,16 +7,16 @@ import { ReleaseBoardPage } from './releases/release-board-page';
 import { ReleaseDetailPage } from './releases/release-detail-page';
 
 export const routes: Routes = [
-  { path: 'login', component: LoginPage, title: 'Sign in · Shiplog' },
+  { path: 'login', component: LoginPage, title: 'Sign in · Doorlist' },
   {
     path: '',
     canActivate: [signedInGuard],
     children: [
       { path: '', pathMatch: 'full', redirectTo: 'releases' },
-      { path: 'releases', component: ReleaseBoardPage, title: 'Releases · Shiplog' },
-      { path: 'releases/:id', component: ReleaseDetailPage, title: 'Release · Shiplog' },
-      { path: 'apps', component: AppsPage, title: 'Apps · Shiplog' },
-      { path: 'apps/:id', component: AppDetailPage, title: 'App · Shiplog' },
+      { path: 'releases', component: ReleaseBoardPage, title: 'Releases · Doorlist' },
+      { path: 'releases/:id', component: ReleaseDetailPage, title: 'Release · Doorlist' },
+      { path: 'apps', component: AppsPage, title: 'Apps · Doorlist' },
+      { path: 'apps/:id', component: AppDetailPage, title: 'App · Doorlist' },
     ],
   },
   { path: '**', redirectTo: '' },

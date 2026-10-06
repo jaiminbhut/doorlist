@@ -3,7 +3,7 @@
 # Started by scripts/deploy.sh; settings come from shared/.env, which the
 # deploy workflow writes from repository secrets and variables.
 
-name: shiplog-shared
+name: doorlist-shared
 
 services:
   caddy:
@@ -52,9 +52,9 @@ services:
 networks:
   # Named so each environment's stack can join them (external: true).
   edge:
-    name: shiplog-edge
+    name: doorlist-edge
   data:
-    name: shiplog-data
+    name: doorlist-data
 
 volumes:
   caddy-data:

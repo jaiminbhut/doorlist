@@ -10,18 +10,18 @@
 # Secrets are generated here and never printed. A secret that's already set
 # is left alone, so running this again is safe. The SQL Server admin password
 # in particular must never change once the database volume exists. Demo
-# passwords are saved to ~/.config/shiplog/demo-passwords, readable only by you,
+# passwords are saved to ~/.config/doorlist/demo-passwords, readable only by you,
 # because GitHub can't show a secret again.
 
 set -euo pipefail
 
-repo=${SHIPLOG_REPO:-jaiminbhut/shiplog}
-reviewer=${SHIPLOG_REVIEWER:-jaiminbhut}
-production_host=${PRODUCTION_HOST:-shiplog.devtownhall.com}
-staging_host=${STAGING_HOST:-shiplog-staging.devtownhall.com}
+repo=${DOORLIST_REPO:-jaiminbhut/doorlist}
+reviewer=${DOORLIST_REVIEWER:-jaiminbhut}
+production_host=${PRODUCTION_HOST:-doorlist.devtownhall.com}
+staging_host=${STAGING_HOST:-doorlist-staging.devtownhall.com}
 acme_email=${ACME_EMAIL:-jaiminbhut35@gmail.com}
 memory_limit_mb=${MSSQL_MEMORY_LIMIT_MB:-1024}
-passwords_file="$HOME/.config/shiplog/demo-passwords"
+passwords_file="$HOME/.config/doorlist/demo-passwords"
 
 if [[ "${1:-}" == --enable ]]; then
   gh variable set DEPLOY_ENABLED --repo "$repo" --body true
