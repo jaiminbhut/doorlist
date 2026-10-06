@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using Doorlist.Api.Apps;
 using Doorlist.Api.Auth;
+using Doorlist.Api.CheckIns;
 using Doorlist.Api.Environments;
 using Doorlist.Api.Events;
 using Doorlist.Api.Releases;
@@ -25,6 +26,8 @@ public sealed class DoorlistDbContext(DbContextOptions<DoorlistDbContext> option
     public DbSet<TicketType> TicketTypes => Set<TicketType>();
 
     public DbSet<Ticket> Tickets => Set<Ticket>();
+
+    public DbSet<CheckIn> CheckIns => Set<CheckIn>();
 
     protected override void OnModelCreating(ModelBuilder builder)
     {
@@ -102,6 +105,24 @@ public sealed class DoorlistDbContext(DbContextOptions<DoorlistDbContext> option
             ticket.HasOne(t => t.Event).WithMany().HasForeignKey(t => t.EventId).OnDelete(DeleteBehavior.Restrict);
             ticket.HasOne(t => t.TicketType).WithMany().HasForeignKey(t => t.TicketTypeId).OnDelete(DeleteBehavior.Restrict);
             ticket.HasOne(t => t.Holder).WithMany().HasForeignKey(t => t.HolderId).OnDelete(DeleteBehavior.Restrict);
+        });
+
+        builder.Entity<CheckIn>(checkIn =>
+        {
+            checkIn.Property(c => c.Outcome).HasConversion<string>().HasMaxLength(20);
+            checkIn.Property(c => c.DeviceId).HasMaxLength(CheckIn.DeviceIdMaxLength);
+            checkIn.Property(c => c.DeviceLabel).HasMaxLength(CheckIn.DeviceLabelMaxLength);
+            checkIn.Property(c => c.ScannedBy).HasMaxLength(CheckIn.UserMaxLength);
+
+            // A scan sent twice (a retried batch) is recorded once.
+            checkIn.HasIndex(c => c.ScanId).IsUnique();
+            // The first admission wins, enforced by the database: at most one
+            // Admitted row per ticket, however many devices sync it at once (ADR 8).
+            checkIn.HasIndex(c => c.TicketId).IsUnique().HasFilter("[Outcome] = N'Admitted'").HasDatabaseName("IX_CheckIns_OneAdmissionPerTicket");
+            checkIn.HasIndex(c => new { c.EventId, c.Outcome });
+
+            checkIn.HasOne(c => c.Event).WithMany().HasForeignKey(c => c.EventId).OnDelete(DeleteBehavior.Restrict);
+            checkIn.HasOne(c => c.Ticket).WithMany().HasForeignKey(c => c.TicketId).OnDelete(DeleteBehavior.Restrict);
         });
 
         builder.Entity<ChecklistItem>(item =>
