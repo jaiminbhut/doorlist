@@ -3,7 +3,9 @@ using Microsoft.EntityFrameworkCore;
 using Doorlist.Api.Apps;
 using Doorlist.Api.Auth;
 using Doorlist.Api.Environments;
+using Doorlist.Api.Events;
 using Doorlist.Api.Releases;
+using Doorlist.Api.Tickets;
 
 namespace Doorlist.Api.Data;
 
@@ -17,6 +19,12 @@ public sealed class DoorlistDbContext(DbContextOptions<DoorlistDbContext> option
     public DbSet<Release> Releases => Set<Release>();
 
     public DbSet<ChecklistItem> ChecklistItems => Set<ChecklistItem>();
+
+    public DbSet<Event> Events => Set<Event>();
+
+    public DbSet<TicketType> TicketTypes => Set<TicketType>();
+
+    public DbSet<Ticket> Tickets => Set<Ticket>();
 
     protected override void OnModelCreating(ModelBuilder builder)
     {
@@ -60,6 +68,40 @@ public sealed class DoorlistDbContext(DbContextOptions<DoorlistDbContext> option
                 .IsUnique()
                 .HasFilter(null);
             release.HasMany(r => r.Checklist).WithOne(i => i.Release).HasForeignKey(i => i.ReleaseId);
+        });
+
+        builder.Entity<Event>(e =>
+        {
+            e.Property(x => x.Name).HasMaxLength(Event.NameMaxLength);
+            e.Property(x => x.Venue).HasMaxLength(Event.VenueMaxLength);
+            e.Property(x => x.Description).HasMaxLength(Event.DescriptionMaxLength);
+            e.Property(x => x.Status).HasConversion<string>().HasMaxLength(20);
+            e.Property(x => x.CreatedBy).HasMaxLength(Event.UserMaxLength);
+            e.HasIndex(x => new { x.Status, x.StartsAt });
+            e.HasMany(x => x.TicketTypes).WithOne(t => t.Event).HasForeignKey(t => t.EventId);
+            e.ToTable(t => t.HasCheckConstraint("CK_Events_EndsAfterStart", "[EndsAt] > [StartsAt]"));
+        });
+
+        builder.Entity<TicketType>(type =>
+        {
+            type.Property(t => t.Name).HasMaxLength(TicketType.NameMaxLength);
+            type.HasIndex(t => new { t.EventId, t.Name }).IsUnique();
+            // The last line of defence against overselling: whatever the code
+            // does, the database refuses a count below zero or above capacity.
+            type.ToTable(t => t.HasCheckConstraint("CK_TicketTypes_Remaining", "[Remaining] >= 0 AND [Remaining] <= [Capacity]"));
+        });
+
+        builder.Entity<Ticket>(ticket =>
+        {
+            ticket.Property(t => t.Code).HasMaxLength(Ticket.CodeMaxLength);
+            ticket.HasIndex(t => new { t.EventId, t.HolderId });
+            ticket.HasIndex(t => t.HolderId);
+            // Tickets are history: their event, type and holder can't be deleted
+            // out from under them (and two cascade paths to Events would be
+            // rejected by SQL Server).
+            ticket.HasOne(t => t.Event).WithMany().HasForeignKey(t => t.EventId).OnDelete(DeleteBehavior.Restrict);
+            ticket.HasOne(t => t.TicketType).WithMany().HasForeignKey(t => t.TicketTypeId).OnDelete(DeleteBehavior.Restrict);
+            ticket.HasOne(t => t.Holder).WithMany().HasForeignKey(t => t.HolderId).OnDelete(DeleteBehavior.Restrict);
         });
 
         builder.Entity<ChecklistItem>(item =>

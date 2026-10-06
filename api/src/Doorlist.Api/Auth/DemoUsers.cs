@@ -14,6 +14,9 @@ public static class DemoUsers
 
     public static IReadOnlyList<(string Email, string DisplayName, string Role)> All { get; } =
     [
+        ("organizer@example.com", "Demo Organizer", Roles.Organizer),
+        ("door@example.com", "Demo Door Staff", Roles.DoorStaff),
+        ("attendee@example.com", "Demo Attendee", Roles.Attendee),
         ("lead@example.com", "Demo Lead", Roles.Lead),
         ("developer@example.com", "Demo Developer", Roles.Developer),
         ("viewer@example.com", "Demo Viewer", Roles.Viewer),

@@ -48,6 +48,9 @@ public sealed class TokenService(IOptions<JwtOptions> options, TimeProvider cloc
 
 public static class ClaimsPrincipalExtensions
 {
+    public static string UserId(this ClaimsPrincipal user) =>
+        user.FindFirstValue(JwtRegisteredClaimNames.Sub) ?? throw new InvalidOperationException("The token has no subject claim.");
+
     public static string Email(this ClaimsPrincipal user) =>
         user.FindFirstValue(TokenService.EmailClaim) ?? throw new InvalidOperationException("The token has no email claim.");
 }
