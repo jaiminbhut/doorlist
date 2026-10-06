@@ -4,7 +4,7 @@ Free event tickets with door check-in. Organizers create events with ticket type
 
 Doorlist is also a public reference project. Alongside the features, it shows how the whole product is built and run: an Angular front end, an ASP.NET Core API on SQL Server, EF Core migrations that run as their own deploy step and are checked against the running API, Docker, CI on every pull request, a rehearsed deploy pipeline, and the decisions behind each of these, written down.
 
-> **Status:** Doorlist's events, sign-up, claiming and tickets work end to end, API and web; door check-in's API is in, and its web page is next. Then the old release tracker is retired ([ADR 6](docs/adr/0006-from-release-tracking-to-event-ticketing.md)). This project started as Shiplog, a release tracker.
+> **Status:** Doorlist works end to end, API and web: events, sign-up, claiming, QR tickets, and door check-in that keeps working offline. Next, the old release tracker is retired ([ADR 6](docs/adr/0006-from-release-tracking-to-event-ticketing.md)). This project started as Shiplog, a release tracker.
 
 ## What it does
 
@@ -12,7 +12,9 @@ Doorlist is also a public reference project. Alongside the features, it shows ho
 - **Sign-up.** Anyone can create an account, and it's always an attendee account. Organizers and door staff are set up by an operator.
 - **Claiming.** Attendees claim up to 4 tickets per event. However many people claim at once, an event never issues more than its capacity ([ADR 7](docs/adr/0007-signed-ticket-codes-and-claiming-without-overselling.md)).
 - **Tickets.** Each ticket is a QR code of a signed code. Door devices can check it with the public key, without a connection.
-- **Door check-in.** Door staff send scans to the API, one at a time online or in batches after being offline. Each scan is recorded once, the first admission of a ticket wins, and later scans are refused or flagged with where and when the ticket was first used ([ADR 8](docs/adr/0008-door-check-in-offline-first.md)). The door page in the web app comes next.
+- **Door check-in.** Door staff pick an event and scan tickets. A USB or Bluetooth QR scanner works as a keyboard, or they can paste the code.
+  - **Online,** every scan goes to the server and its answer is final: admit, already used (with where and when), wrong event, or not valid.
+  - **Offline,** the page checks each code's signature in the browser with WebCrypto, refuses tickets it has already let in, and queues the scans. It syncs them when the connection returns and flags any ticket another door admitted first ([ADR 8](docs/adr/0008-door-check-in-offline-first.md)).
 
 Until it's retired, the release tracker is still there for its own roles (Lead, Developer, Viewer): apps, environments, and releases with a checklist gate.
 
@@ -59,7 +61,7 @@ Local demo accounts, all with the password `Doorlist-demo-2026`. Anyone can also
 | Email | Role |
 |---|---|
 | `organizer@example.com` | Organizer: creates and publishes events |
-| `door@example.com` | DoorStaff: checks tickets at the door |
+| `door@example.com` | DoorStaff: checks tickets at the door (the Door page) |
 | `attendee@example.com` | Attendee: claims tickets |
 | `lead@example.com` | Lead |
 | `developer@example.com` | Developer |
@@ -87,7 +89,7 @@ docker-compose.yml       Local stack
 | 2. Domain and auth ✅ | The release tracker: apps, environments, releases, checklists; ASP.NET Core Identity + JWT with roles |
 | 3. Deploy pipeline (built, waiting for the server) | Images to GHCR; staging then production with approval; settings check, backup, migrations, health check and rollback; Content-Security-Policy |
 | 4. Expand/contract ✅ | A CI check that the running API survives each PR's migrations; a breaking schema change shipped in three steps that each pass it ([`docs/migrations.md`](docs/migrations.md)) |
-| 5. Doorlist | Rename ✅; events, ticket types, attendee sign-up, claiming without overselling and signed QR tickets ✅; door check-in with offline sync (API ✅); the release tracker retired in steps ([ADR 6](docs/adr/0006-from-release-tracking-to-event-ticketing.md), [ADR 7](docs/adr/0007-signed-ticket-codes-and-claiming-without-overselling.md)) |
+| 5. Doorlist | Rename ✅; events, ticket types, attendee sign-up, claiming without overselling and signed QR tickets ✅; door check-in with offline sync ✅; the release tracker retired in steps ([ADR 6](docs/adr/0006-from-release-tracking-to-event-ticketing.md), [ADR 7](docs/adr/0007-signed-ticket-codes-and-claiming-without-overselling.md)) |
 | 6. Mobile | React Native (Expo) app: an attendee's tickets, and a door scanner that works offline |
 | 7. Polish | Live demo, screenshots, `v1.0.0` |
 

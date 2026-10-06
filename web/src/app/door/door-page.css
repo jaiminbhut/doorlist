@@ -1,0 +1,41 @@
+.scan-form input {
+  font-size: 1.125rem;
+}
+
+.verdict {
+  margin-top: 16px;
+  padding: 16px;
+  border-radius: 10px;
+  border: 2px solid var(--border);
+}
+
+.verdict p {
+  margin: 0;
+}
+
+.verdict-title {
+  font-size: 1.375rem;
+  font-weight: 700;
+  margin-bottom: 4px !important;
+}
+
+.verdict.good {
+  border-color: var(--success);
+  color: var(--success);
+}
+
+.verdict.bad {
+  border-color: var(--danger);
+  color: var(--danger);
+}
+
+.verdict.warn {
+  border-color: var(--warning-text);
+  color: var(--warning-text);
+  background: var(--warning-bg);
+}
+
+.status-row {
+  margin-top: 16px;
+  justify-content: space-between;
+}

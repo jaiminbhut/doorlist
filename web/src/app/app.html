@@ -13,6 +13,9 @@
       @if (auth.canManageEvents()) {
         <a routerLink="/organizer" routerLinkActive="active">Organize</a>
       }
+      @if (auth.canCheckIn()) {
+        <a routerLink="/door" routerLinkActive="active">Door</a>
+      }
       @if (auth.usesReleaseTracker()) {
         <a routerLink="/releases" routerLinkActive="active">Releases</a>
         <a routerLink="/apps" routerLinkActive="active">Apps</a>

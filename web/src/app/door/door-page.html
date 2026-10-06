@@ -1,0 +1,108 @@
+<p><a routerLink="/door">← Change event</a></p>
+
+@if (loadError(); as message) {
+  <p class="notice">{{ message }}</p>
+}
+
+<section class="panel" aria-labelledby="checkin-heading">
+  <header>
+    <h2 id="checkin-heading">{{ event()?.name ?? 'Check-in' }}</h2>
+    <p class="muted">
+      {{ doorName || 'Unnamed door' }}
+      @if (!hasKey()) {
+        · <span class="badge">No ticket key yet: can't check tickets offline</span>
+      }
+    </p>
+  </header>
+
+  <form class="scan-form" [formGroup]="form" (ngSubmit)="check()">
+    <label class="field-label" for="ticket-code">Scan or paste a ticket code</label>
+    <div class="row">
+      <input id="ticket-code" type="text" autocomplete="off" formControlName="code" #codeInput />
+      <button class="primary" type="submit" [disabled]="checking()">Check</button>
+    </div>
+  </form>
+
+  @if (verdict(); as v) {
+    <div class="verdict" [class]="'verdict ' + tone()" role="status" aria-live="assertive">
+      @switch (v.kind) {
+        @case ('server') {
+          @switch (v.result.outcome) {
+            @case ('admitted') {
+              <p class="verdict-title">Admit</p>
+              <p>{{ v.result.holderName }} · {{ v.result.ticketTypeName }}</p>
+            }
+            @case ('alreadyAdmitted') {
+              <p class="verdict-title">Already used: don't admit</p>
+              <p>
+                {{ v.result.holderName }} was admitted at {{ v.result.admittedAtDoor }},
+                {{ v.result.admittedAt | date: 'HH:mm' }}.
+              </p>
+            }
+            @case ('wrongEvent') {
+              <p class="verdict-title">Wrong event: don't admit</p>
+              <p>This is a real ticket, for a different event.</p>
+            }
+            @case ('invalid') {
+              <p class="verdict-title">Not a valid ticket: don't admit</p>
+            }
+          }
+        }
+        @case ('offline') {
+          @switch (v.outcome) {
+            @case ('admitted') {
+              <p class="verdict-title">Admit (offline)</p>
+              <p>
+                A genuine ticket for this event. It will be recorded when the connection is back.
+              </p>
+            }
+            @case ('alreadyAdmittedHere') {
+              <p class="verdict-title">Already used at this door: don't admit</p>
+            }
+            @case ('wrongEvent') {
+              <p class="verdict-title">Wrong event: don't admit</p>
+            }
+            @case ('invalid') {
+              <p class="verdict-title">Not a valid ticket: don't admit</p>
+            }
+          }
+        }
+        @case ('error') {
+          <p class="verdict-title">{{ v.message }}</p>
+        }
+      }
+    </div>
+  }
+
+  <div class="row status-row">
+    <span class="muted waiting">{{ pending() }} waiting to sync</span>
+    @if (summary(); as s) {
+      <span class="muted totals"
+        >{{ s.admitted }} of {{ s.issued }} admitted · {{ s.duplicates }} flagged</span
+      >
+    }
+    <button
+      class="secondary sync"
+      type="button"
+      [disabled]="pending() === 0 || syncing()"
+      (click)="sync()"
+    >
+      {{ syncing() ? 'Syncing…' : 'Sync now' }}
+    </button>
+  </div>
+
+  @if (flagged().length > 0) {
+    <h3>Flagged after syncing</h3>
+    <ul class="list flagged">
+      @for (result of flagged(); track result.scanId) {
+        <li>
+          <span class="strong">{{ result.holderName }}</span>
+          <span class="muted"
+            >first admitted at {{ result.admittedAtDoor }},
+            {{ result.admittedAt | date: 'HH:mm' }}</span
+          >
+        </li>
+      }
+    </ul>
+  }
+</section>
