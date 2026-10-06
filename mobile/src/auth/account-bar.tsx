@@ -1,6 +1,7 @@
 import { Alert, Pressable, StyleSheet, View } from 'react-native';
 import { Text } from '@/components/text';
 import { Wordmark } from '@/components/wordmark';
+import { queuedCount } from '@/door/door-store';
 import { size, usePalette } from '@/theme';
 import { describeRoles } from './session';
 import { useSession } from './session-context';
@@ -13,11 +14,22 @@ export function AccountBar() {
     return null;
   }
 
-  const confirmSignOut = () =>
-    Alert.alert('Sign out?', `You're signed in as ${session.user.email}.`, [
-      { text: 'Cancel', style: 'cancel' },
-      { text: 'Sign out', style: 'destructive', onPress: () => void signOut() },
-    ]);
+  // Scans waiting to sync belong to the door, not the person (ADR 9): signing
+  // out keeps them, and says so.
+  const confirmSignOut = async () => {
+    const waiting = await queuedCount().catch(() => 0);
+    const scans = waiting === 1 ? '1 door scan hasn’t' : `${waiting} door scans haven’t`;
+    Alert.alert(
+      'Sign out?',
+      waiting > 0
+        ? `${scans} synced yet. They stay on this phone and sync after door staff sign in again.`
+        : `You're signed in as ${session.user.email}.`,
+      [
+        { text: 'Cancel', style: 'cancel' },
+        { text: 'Sign out', style: 'destructive', onPress: () => void signOut() },
+      ],
+    );
+  };
 
   return (
     <View style={styles.bar}>
@@ -34,7 +46,7 @@ export function AccountBar() {
         <Pressable
           testID="sign-out"
           accessibilityRole="button"
-          onPress={confirmSignOut}
+          onPress={() => void confirmSignOut()}
           hitSlop={8}
           style={({ pressed }) => [
             styles.signOut,

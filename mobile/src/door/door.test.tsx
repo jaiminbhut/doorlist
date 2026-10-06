@@ -127,7 +127,7 @@ describe('the door', () => {
     expect(screen.getByRole('button', { name: 'Sign in again' })).toBeOnTheScreen();
   });
 
-  it("says when the server can't be reached", async () => {
+  it("can't decide offline before the ticket key has ever loaded", async () => {
     api(async () => {
       throw new ApiUnreachableError();
     });
@@ -135,7 +135,8 @@ describe('the door', () => {
 
     await typeCode('DL1.code.signature');
 
-    expect(await screen.findByText(/Can't reach Doorlist/)).toBeOnTheScreen();
+    expect(await screen.findByText(/hasn't loaded the ticket key yet/)).toBeOnTheScreen();
+    expect(screen.getByText("No ticket key yet: can't check tickets offline")).toBeOnTheScreen();
   });
 
   it('checks a code from the camera once, however many frames show it (ADR 9)', async () => {

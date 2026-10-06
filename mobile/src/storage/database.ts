@@ -21,6 +21,22 @@ const migrations: string[] = [
      issued_at TEXT NOT NULL,
      code TEXT NOT NULL
    );`,
+
+  // 2. The door, offline (ADR 8): scans waiting for the server, in the order
+  //    they were made, and the tickets this device has let in.
+  `CREATE TABLE door_queue (
+     position INTEGER PRIMARY KEY AUTOINCREMENT,
+     scan_id TEXT NOT NULL UNIQUE,
+     event_id INTEGER NOT NULL,
+     code TEXT NOT NULL,
+     scanned_at TEXT NOT NULL
+   );
+   CREATE INDEX door_queue_event ON door_queue (event_id);
+   CREATE TABLE door_admitted (
+     event_id INTEGER NOT NULL,
+     ticket_id TEXT NOT NULL,
+     PRIMARY KEY (event_id, ticket_id)
+   );`,
 ];
 
 export type Database = SQLite.SQLiteDatabase;
