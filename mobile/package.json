@@ -16,11 +16,17 @@
   },
   "jest": {
     "preset": "jest-expo",
-    "globalSetup": "./jest.global-setup.js"
+    "globalSetup": "./jest.global-setup.js",
+    "transformIgnorePatterns": [
+      "/node_modules/(?!(.pnpm|react-native|@react-native|@react-native-community|expo|@expo|@expo-google-fonts|react-navigation|@react-navigation|@sentry/react-native|native-base|standard-navigation|@noble))",
+      "/node_modules/react-native-reanimated/plugin/",
+      "/node_modules/@react-native/babel-preset/"
+    ]
   },
   "dependencies": {
     "@expo-google-fonts/atkinson-hyperlegible-next": "^0.4.1",
     "@expo-google-fonts/big-shoulders": "^0.4.1",
+    "@noble/curves": "2.4.0",
     "expo": "~57.0.27",
     "expo-brightness": "~57.0.2",
     "expo-constants": "~57.0.21",
