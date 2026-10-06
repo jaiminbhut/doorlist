@@ -1,8 +1,11 @@
-using Doorlist.Api.Releases;
-
 namespace Doorlist.Api.Tests;
 
-public sealed class ReleaseVersionTests
+/// <summary>
+/// Pins how the retired release tracker's old "2.4.0 (118)" version string
+/// splits. MigrationTests uses this to check the historical expand and switch
+/// migrations, which still run on every new database.
+/// </summary>
+public sealed class LegacyVersionTests
 {
     public static TheoryData<string, string, int?> Versions { get; } = new()
     {
@@ -19,12 +22,6 @@ public sealed class ReleaseVersionTests
 
     [Theory]
     [MemberData(nameof(Versions))]
-    public void LegacyParseSplitsANameAndATrailingBuildNumber(string version, string name, int? build) =>
+    public void ParseSplitsANameAndATrailingBuildNumber(string version, string name, int? build) =>
         Assert.Equal((name, build), LegacyVersion.Parse(version));
-
-    [Theory]
-    [InlineData("2.4.0", 118, "2.4.0 (118)")]
-    [InlineData("2.4.0", null, "2.4.0")]
-    public void FormatJoinsThemBackUp(string name, int? build, string expected) =>
-        Assert.Equal(expected, ReleaseVersion.Format(name, build));
 }

@@ -19,7 +19,7 @@ public sealed class AuthTests(DoorlistApiFactory factory)
     [Fact]
     public async Task EverythingElseNeedsSignIn()
     {
-        var response = await factory.CreateClient().GetAsync(new Uri("/api/apps", UriKind.Relative));
+        var response = await factory.CreateClient().GetAsync(new Uri("/api/tickets/mine", UriKind.Relative));
 
         Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
     }
@@ -28,17 +28,17 @@ public sealed class AuthTests(DoorlistApiFactory factory)
     public async Task LoginReturnsATokenWithTheUsersRoles()
     {
         var response = await factory.CreateClient().PostAsJsonAsync(
-            "/api/auth/login", new LoginRequest("lead@example.com", DoorlistApiFactory.DemoPassword));
+            "/api/auth/login", new LoginRequest("organizer@example.com", DoorlistApiFactory.DemoPassword));
 
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
         var login = await response.Content.ReadFromJsonAsync<LoginResponse>(DoorlistApiFactory.Json);
         Assert.False(string.IsNullOrEmpty(login!.AccessToken));
-        Assert.Equal(["Lead"], login.User.Roles);
+        Assert.Equal(["Organizer"], login.User.Roles);
         Assert.True(login.ExpiresAt > DateTimeOffset.UtcNow);
     }
 
     [Theory]
-    [InlineData("lead@example.com", "wrong-password")]
+    [InlineData("organizer@example.com", "wrong-password")]
     [InlineData("nobody@example.com", DoorlistApiFactory.DemoPassword)]
     public async Task BadCredentialsGetTheSameAnswer(string email, string password)
     {
@@ -51,13 +51,13 @@ public sealed class AuthTests(DoorlistApiFactory factory)
     [Fact]
     public async Task MeDescribesTheSignedInUser()
     {
-        var client = await factory.CreateClientAsAsync(Roles.Developer);
+        var client = await factory.CreateClientAsAsync(Roles.DoorStaff);
 
         var me = await client.GetFromJsonAsync<UserResponse>("/api/auth/me", DoorlistApiFactory.Json);
 
-        Assert.Equal("developer@example.com", me!.Email);
-        Assert.Equal("Demo Developer", me.DisplayName);
-        Assert.Equal(["Developer"], me.Roles);
+        Assert.Equal("door@example.com", me!.Email);
+        Assert.Equal("Demo Door Staff", me.DisplayName);
+        Assert.Equal(["DoorStaff"], me.Roles);
     }
 
     [Fact]
@@ -67,7 +67,7 @@ public sealed class AuthTests(DoorlistApiFactory factory)
         client.DefaultRequestHeaders.Authorization = new("Bearer",
             "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJ4Iiwicm9sZSI6IkxlYWQifQ.c2lnbmVkLXdpdGgtYW5vdGhlci1rZXk");
 
-        var response = await client.GetAsync(new Uri("/api/apps", UriKind.Relative));
+        var response = await client.GetAsync(new Uri("/api/tickets/mine", UriKind.Relative));
 
         Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
     }
