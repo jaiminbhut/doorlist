@@ -7,6 +7,9 @@
 #   scripts/e2e.sh                  # all tests
 #   scripts/e2e.sh --grep offline   # any Playwright arguments pass through
 #
+# E2E_BASE_URL points it at another stack on this machine (default
+# http://localhost:8080). It must stay on localhost.
+#
 # The image matches the installed @playwright/test version and has its
 # browsers built in, so nothing is downloaded on this machine.
 
@@ -20,7 +23,7 @@ version=$(node -p "require('${root}/web/node_modules/@playwright/test/package.js
 # page's offline checks need (WebCrypto).
 docker run --rm --init --ipc=host \
   --network host \
-  -e E2E_BASE_URL=http://localhost:8080 \
+  -e E2E_BASE_URL="${E2E_BASE_URL:-http://localhost:8080}" \
   -e SCREENSHOTS="${SCREENSHOTS:-}" \
   -v "${root}/web:/work/web" \
   -v "${root}/docs:/work/docs" \
