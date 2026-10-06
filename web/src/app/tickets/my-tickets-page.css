@@ -95,6 +95,35 @@
   height: 168px;
 }
 
+/* The QR code replaces its placeholder with a fade, not a pop. */
+img.qr {
+  animation: qr-drawn 200ms ease-out;
+}
+
+@keyframes qr-drawn {
+  from {
+    opacity: 0;
+  }
+}
+
+/* Just claimed: the new tickets come out like tickets from a dispenser. */
+.added {
+  margin-bottom: 16px;
+  color: var(--ok);
+  font-weight: 700;
+}
+
+.ticket.just-claimed {
+  animation: dispensed 460ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
+}
+
+@keyframes dispensed {
+  from {
+    opacity: 0;
+    transform: translateY(-18px);
+  }
+}
+
 .qr-pending {
   background: #ece9f5;
   border-radius: 4px;

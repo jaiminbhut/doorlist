@@ -11,9 +11,11 @@
       </p>
       <h2 id="organizer-event-heading">{{ event.name }}</h2>
       <p class="where">{{ event.venue }}</p>
-      <span class="tag" [class.published]="!isDraft()">{{
-        isDraft() ? 'Draft' : 'Published'
-      }}</span>
+      @if (isDraft()) {
+        <span class="tag">Draft</span>
+      } @else {
+        <span class="tag published" [class.stamped]="justPublished()">Published</span>
+      }
     </header>
 
     <section class="panel" aria-labelledby="ticket-types-heading">

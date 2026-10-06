@@ -123,7 +123,11 @@ async function seed(request: APIRequestContext) {
 
 async function shoot(page: Page, name: string, size: Variant) {
   await rendered(page);
-  await page.screenshot({ path: `../docs/screenshots/${name}-${size}.png`, fullPage: true });
+  await page.screenshot({
+    path: `../docs/screenshots/${name}-${size}.png`,
+    fullPage: true,
+    animations: 'disabled',
+  });
 }
 
 test('capture the main pages', async ({ browser, request }) => {

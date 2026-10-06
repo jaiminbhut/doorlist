@@ -56,5 +56,6 @@ describe('OrganizerEventPage', () => {
 
     expect(publishButton()).toBeNull();
     expect(page().textContent).toContain('Published.');
+    expect(page().querySelector('.tag.published.stamped')).not.toBeNull();
   });
 });

@@ -21,6 +21,8 @@ export class OrganizerEventPage implements OnInit {
   protected readonly event = signal<DoorlistEvent | null>(null);
   protected readonly loadError = signal<string | null>(null);
   protected readonly busy = signal(false);
+  /** Set when publishing succeeds here, so the new tag is stamped on, not just shown. */
+  protected readonly justPublished = signal(false);
   protected readonly actionError = signal<string | null>(null);
 
   protected readonly isDraft = computed(() => this.event()?.status === 'draft');
@@ -86,6 +88,7 @@ export class OrganizerEventPage implements OnInit {
     this.api.publish(event.id).subscribe({
       next: (published) => {
         this.event.set(published);
+        this.justPublished.set(true);
         this.busy.set(false);
       },
       error: (error: unknown) => {

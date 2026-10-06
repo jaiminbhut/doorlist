@@ -59,6 +59,8 @@ test.describe.serial('Doorlist, end to end', () => {
     await page.getByLabel('How many').selectOption('2');
     await page.getByRole('button', { name: 'Get tickets' }).click();
     await expect(page).toHaveURL(/\/tickets$/);
+    await expect(page.getByRole('status')).toHaveText(`2 tickets added for ${eventName}.`);
+    await expect(page.locator('.ticket.just-claimed')).toHaveCount(2);
 
     const qrCodes = page.locator('img.qr');
     await expect(qrCodes).toHaveCount(2);
