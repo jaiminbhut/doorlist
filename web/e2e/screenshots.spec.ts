@@ -115,24 +115,26 @@ async function seed(request: APIRequestContext) {
   const meetup = await api(request, attendee, 'GET', `/events/${ids[1]}`);
   const claimed = await api(request, attendee, 'POST', `/events/${ids[1]}/tickets`, {
     ticketTypeId: meetup.ticketTypes[0].id,
-    quantity: 1,
+    quantity: 2,
   });
 
-  return { ids, attendeeEmail: email, codeToScan: claimed[0].code as string };
+  const codes = (claimed as { code: string }[]).map((ticket) => ticket.code);
+  return { ids, attendeeEmail: email, codes };
 }
 
 async function shoot(page: Page, name: string, size: Variant) {
   await rendered(page);
   await page.screenshot({
     path: `../docs/screenshots/${name}-${size}.png`,
-    fullPage: true,
+    // Phones show what's on screen, the way someone holding one sees it.
+    fullPage: size === 'desktop',
     animations: 'disabled',
   });
 }
 
 test('capture the main pages', async ({ browser, request }) => {
   test.setTimeout(180_000);
-  const { ids, attendeeEmail, codeToScan } = await seed(request);
+  const { ids, attendeeEmail, codes } = await seed(request);
 
   for (const size of Object.keys(variants) as Variant[]) {
     const context = await browser.newContext(variants[size]);
@@ -167,11 +169,12 @@ test('capture the main pages', async ({ browser, request }) => {
     await page.goto(`/door/${ids[1]}`);
     const field = page.getByLabel('Scan or paste a ticket code');
     await expect(field).toBeFocused();
-    // The same ticket every time: admitted the first time (desktop), refused after.
-    await field.fill(codeToScan);
+    // Desktop and phone each admit a ticket; dark mode shows the first one refused.
+    const scan = { desktop: codes[0], phone: codes[1], 'phone-dark': codes[0] }[size];
+    await field.fill(scan);
     await field.press('Enter');
     await expect(page.locator('.decision')).toHaveText(
-      size === 'desktop' ? 'Admit' : "Don't admit",
+      size === 'phone-dark' ? "Don't admit" : 'Admit',
     );
     await shoot(page, 'door', size);
     await context.close();

@@ -2,9 +2,17 @@
 
 Free event tickets with door check-in. Organizers create events with ticket types and capacities. Attendees sign up and claim tickets, each a QR code the server signs so it can be checked without a connection. Door staff scan tickets, offline if the venue's network drops, and scans sync when it comes back.
 
+<p align="center">
+  <img src="docs/screenshots/events-phone.png" width="250" alt="Upcoming events listed like a venue's lineup, each with a big day number">
+  <img src="docs/screenshots/tickets-phone.png" width="250" alt="My tickets: a violet paper ticket with the QR code on a perforated white stub">
+  <img src="docs/screenshots/door-phone.png" width="250" alt="The door console admitting a ticket, with the verdict in a large green block">
+</p>
+
+More in [docs/screenshots](docs/screenshots), at desktop size and in dark mode. A Playwright spec captures them from a running stack (`SCREENSHOTS=1 scripts/e2e.sh screenshots`).
+
 Doorlist is also a public reference project. Alongside the features, it shows how the whole product is built and run: an Angular front end, an ASP.NET Core API on SQL Server, EF Core migrations that run as their own deploy step and are checked against the running API, Docker, CI on every pull request, a rehearsed deploy pipeline, and the decisions behind each of these, written down.
 
-> **Status:** Doorlist works end to end, API and web: events, sign-up, claiming, QR tickets, and door check-in that keeps working offline. The old release tracker is fully retired, code and tables ([ADR 6](docs/adr/0006-from-release-tracking-to-event-ticketing.md)). This project started as Shiplog, a release tracker.
+> **Status:** [v1.0.0](CHANGELOG.md). Doorlist works end to end: events, sign-up, claiming, QR tickets, and door check-in that keeps working offline, tested in a real browser on every pull request. The deploy pipeline is built and rehearsed, and the live demo waits for its server. This project started as Shiplog, a release tracker ([ADR 6](docs/adr/0006-from-release-tracking-to-event-ticketing.md)).
 
 ## What it does
 
@@ -20,7 +28,7 @@ Doorlist is also a public reference project. Alongside the features, it shows ho
 
 | Layer | Choice |
 |---|---|
-| Web | Angular (standalone components, signals), served by nginx |
+| Web | Angular (standalone components, signals, zoneless), served by nginx under a strict Content-Security-Policy; self-hosted fonts, light and dark themes, motion that respects reduced-motion settings |
 | API | ASP.NET Core on .NET 10, minimal APIs, ProblemDetails, health checks |
 | Data | SQL Server, EF Core code-first migrations ([ADR 2](docs/adr/0002-sql-server-with-ef-core-code-first.md)) |
 | Auth | ASP.NET Core Identity, short-lived JWTs, role policies, attendee sign-up with rate limits ([ADR 4](docs/adr/0004-authentication-with-identity-and-jwt.md), [ADR 6](docs/adr/0006-from-release-tracking-to-event-ticketing.md)) |
@@ -89,7 +97,7 @@ docker-compose.yml       Local stack
 | 4. Expand/contract ✅ | A CI check that the running API survives each PR's migrations; a breaking schema change shipped in three steps that each pass it ([`docs/migrations.md`](docs/migrations.md)) |
 | 5. Doorlist ✅ | Rename ✅; events, ticket types, attendee sign-up, claiming without overselling and signed QR tickets ✅; door check-in with offline sync ✅; the release tracker retired in steps ✅ ([ADR 6](docs/adr/0006-from-release-tracking-to-event-ticketing.md), [ADR 7](docs/adr/0007-signed-ticket-codes-and-claiming-without-overselling.md)) |
 | 6. Mobile | React Native (Expo) app: an attendee's tickets, and a door scanner that works offline |
-| 7. Polish | Live demo, screenshots, `v1.0.0` |
+| 7. Polish ✅ | Browser tests in CI, its own look, motion, screenshots, [`v1.0.0`](CHANGELOG.md). The live demo follows milestone 3's server. |
 
 ## Contributing
 
