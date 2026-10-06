@@ -112,3 +112,22 @@ The parser for the old `"2.4.0 (118)"` form isn't needed by the API any more. It
 | [#5](https://github.com/jaiminbhut/doorlist/pull/5) | Contract: drop `Version` | The step 2 API keeps working |
 
 One lesson is in the history. Step 1 first shipped without making `Version` nullable. Planning step 2 showed the problem: once step 2 stopped writing the column, the step 1 API would break on step 2's rows, whether running side by side or after a rollback. The fix went into step 1 before it merged. That's what the second commit on #3 is.
+
+## Retiring a feature: the release tracker
+
+The project started as a release tracker, with apps, environments, releases and checklists. It became Doorlist ([ADR 6](adr/0006-from-release-tracking-to-event-ticketing.md)). Removing a whole feature is a breaking schema change like any other, so it follows the same steps. The expand step was Doorlist's own tables, added alongside.
+
+### Switch
+
+The release tracker's endpoints, entities, roles and pages are deleted, and the model no longer maps `Apps`, `Environments`, `Releases` or `ChecklistItems`.
+
+- **Up:** EF generates `DropTable` for all four in migration `RetireReleaseTrackerSwitch`. That's replaced with a comment, because the API still running during the deploy reads and writes those tables.
+- **Down:** EF's generated `CreateTable` calls are removed too, since `Up` never dropped anything.
+
+The checks that used the release tracker change first:
+
+- the schema compatibility check
+- the CI smoke test
+- the deploy rehearsal
+
+They now publish an event, claim tickets and check one in. If they didn't, the next step's check would run against an API that no longer has the endpoints it calls.
