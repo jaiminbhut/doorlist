@@ -27,7 +27,7 @@ Doorlist is also a public reference project. Alongside the features, it shows ho
 | Tickets | Claims that can't oversell (atomic reservation, per-attendee lock, check constraint); ECDSA-signed QR codes checkable offline ([ADR 7](docs/adr/0007-signed-ticket-codes-and-claiming-without-overselling.md)) |
 | Check-in | Idempotent batch scans, first admission enforced by a filtered unique index, duplicates flagged ([ADR 8](docs/adr/0008-door-check-in-offline-first.md)) |
 | Migrations | EF Core migration bundle, run as a separate step before the API starts ([ADR 3](docs/adr/0003-run-migrations-as-a-separate-step.md)); every PR checked against the running API version, breaking changes in expand/contract steps ([docs/migrations.md](docs/migrations.md)) |
-| Tests | xUnit integration tests against a real SQL Server (Testcontainers) |
+| Tests | xUnit integration tests against a real SQL Server (Testcontainers); Vitest unit tests; Playwright browser tests of the whole flow, online and offline, against the production build |
 | Delivery | Docker multi-stage images, GHCR, GitHub Actions; staging then production (with approval) on one server behind Caddy ([ADR 5](docs/adr/0005-single-server-deploy-with-docker-compose.md), [deploy/](deploy/README.md)) |
 
 ## Architecture
@@ -62,6 +62,8 @@ Local demo accounts, all with the password `Doorlist-demo-2026`. Anyone can also
 | `door@example.com` | DoorStaff: checks tickets at the door (the Door page) |
 | `attendee@example.com` | Attendee: claims tickets |
 
+With the stack running, `scripts/e2e.sh` runs the browser tests in the official Playwright image. You don't need a local browser.
+
 ## Repository layout
 
 ```
@@ -69,10 +71,11 @@ api/                     ASP.NET Core API, EF Core, migrations, tests
   src/Doorlist.Api/
   tests/Doorlist.Api.Tests/
 web/                     Angular app
+  e2e/                   Playwright browser tests
 docs/adr/                Architecture decision records
 deploy/                  Server setup, Caddy, compose files and the deploy script
-.github/workflows/       CI (build, tests, migration checks, schema compatibility, smoke test) and Deploy
-scripts/                 Schema compatibility check, deploy rehearsal, GitHub deploy setup
+.github/workflows/       CI (build, tests, migration checks, schema compatibility, smoke and browser tests) and Deploy
+scripts/                 Schema compatibility check, browser tests, deploy rehearsal, GitHub deploy setup
 docker-compose.yml       Local stack
 ```
 
