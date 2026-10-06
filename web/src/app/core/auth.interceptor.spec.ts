@@ -24,17 +24,17 @@ describe('authInterceptor', () => {
   };
 
   it('sends the bearer token to the API', () => {
-    const { client, http } = setUp(fakeAuth('Viewer'));
+    const { client, http } = setUp(fakeAuth('Attendee'));
 
-    client.get('/api/apps').subscribe();
+    client.get('/api/tickets/mine').subscribe();
 
-    expect(http.expectOne('/api/apps').request.headers.get('Authorization')).toBe(
+    expect(http.expectOne('/api/tickets/mine').request.headers.get('Authorization')).toBe(
       'Bearer test-token',
     );
   });
 
   it('does not send the token anywhere else', () => {
-    const { client, http } = setUp(fakeAuth('Viewer'));
+    const { client, http } = setUp(fakeAuth('Attendee'));
 
     client.get('https://elsewhere.example.com/data').subscribe();
 
@@ -44,12 +44,12 @@ describe('authInterceptor', () => {
   });
 
   it('signs out and goes to the login page when the API answers 401', () => {
-    const auth = fakeAuth('Viewer');
+    const auth = fakeAuth('Attendee');
     const { client, http, router } = setUp(auth);
     const navigate = vi.spyOn(router, 'navigate').mockResolvedValue(true);
 
-    client.get('/api/apps').subscribe({ error: () => undefined });
-    http.expectOne('/api/apps').flush(null, { status: 401, statusText: 'Unauthorized' });
+    client.get('/api/tickets/mine').subscribe({ error: () => undefined });
+    http.expectOne('/api/tickets/mine').flush(null, { status: 401, statusText: 'Unauthorized' });
 
     expect(auth.signedOut).toBe(true);
     expect(navigate).toHaveBeenCalledWith(['/login'], expect.anything());

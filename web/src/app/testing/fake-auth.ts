@@ -14,9 +14,6 @@ export function fakeAuth(...roles: Role[]) {
     canManageEvents: computed(() => has('Organizer')),
     isAttendee: computed(() => has('Attendee')),
     canCheckIn: computed(() => has('DoorStaff') || has('Organizer')),
-    usesReleaseTracker: computed(() => has('Lead') || has('Developer') || has('Viewer')),
-    canManageApps: computed(() => has('Lead')),
-    canWorkOnReleases: computed(() => has('Lead') || has('Developer')),
     hasRole: has,
     token: () => (user ? 'test-token' : null),
     homePath: () =>
