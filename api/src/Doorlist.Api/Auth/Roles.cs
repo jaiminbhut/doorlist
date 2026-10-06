@@ -22,6 +22,7 @@ public static class Policies
 {
     public const string ManageEvents = nameof(ManageEvents);
     public const string ClaimTickets = nameof(ClaimTickets);
+    public const string CheckIn = nameof(CheckIn);
 
     public const string ManageApps = nameof(ManageApps);
     public const string WorkOnReleases = nameof(WorkOnReleases);
