@@ -10,7 +10,7 @@
 #
 #   scripts/check-schema-compat.sh <base-ref>
 #
-# Needs Docker, curl and jq. On Apple Silicon, SQL Server runs under Rosetta.
+# Needs Docker, curl, jq and openssl. On Apple Silicon, SQL Server runs under Rosetta.
 
 set -euo pipefail
 
@@ -29,6 +29,11 @@ connection="Server=${run_id}-db;Database=Doorlist;User Id=sa;Password=${sa_passw
 # connection string as ConnectionStrings:Shiplog. Pass both names, so the
 # check can run an API from either side of the rename.
 api_settings=(-e "ConnectionStrings__Doorlist=$connection" -e "ConnectionStrings__Shiplog=$connection")
+# Every other setting the API refuses to start without. An API from before a
+# setting existed simply ignores it. When the API gains a required setting,
+# add it here too, or the next pull request's check can't start main's API.
+ticket_key=$(openssl genpkey -algorithm EC -pkeyopt ec_paramgen_curve:P-256 | openssl pkcs8 -topk8 -nocrypt -outform DER | base64 | tr -d '\n')
+api_settings+=(-e "Tickets__SigningKey=$ticket_key")
 
 cleanup() {
   docker rm -f "${run_id}-db" "${run_id}-api" >/dev/null 2>&1 || true
