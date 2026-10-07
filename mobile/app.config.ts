@@ -65,6 +65,18 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
       monochromeImage: './assets/android-icon-monochrome.png',
     },
     predictiveBackGestureEnabled: false,
+    // Ask only for what the app uses. The template adds storage and drawing
+    // over other apps; expo-brightness adds changing system settings, but the
+    // ticket screen only brightens its own window; expo-secure-store's
+    // biometrics library adds fingerprints, but the session isn't behind one.
+    blockedPermissions: [
+      'android.permission.READ_EXTERNAL_STORAGE',
+      'android.permission.WRITE_EXTERNAL_STORAGE',
+      'android.permission.SYSTEM_ALERT_WINDOW',
+      'android.permission.WRITE_SETTINGS',
+      'android.permission.USE_BIOMETRIC',
+      'android.permission.USE_FINGERPRINT',
+    ],
   },
   plugins: [
     'expo-router',
