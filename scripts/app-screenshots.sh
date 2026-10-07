@@ -118,7 +118,9 @@ flow() {
 
 shot() {
   front
-  sleep 1 # let the last animation, or the status bar, settle
+  # Let the last animation and the status bar settle. Coming back to the
+  # front, the app also shows the home indicator for about 2 seconds.
+  sleep 3
   xcrun simctl io "$udid" screenshot "$work/$1.png" >/dev/null 2>&1
   # 1x, like the web's phone screenshots: 402 x 874 for an iPhone 17 Pro.
   sips --resampleWidth 402 "$work/$1.png" --out "$shots/app-$1.png" >/dev/null
