@@ -12,6 +12,23 @@ export interface Ticket {
   code: string;
 }
 
+/** The most tickets one attendee can hold for one event, as the API enforces (ADR 7). */
+export const MAX_TICKETS_PER_ATTENDEE = 4;
+
 export function myTickets(token: string): Promise<Ticket[]> {
   return request<Ticket[]>('/api/tickets/mine', { token });
+}
+
+/** Claims tickets of one type. The API answers with the new tickets. */
+export function claimTickets(
+  eventId: number,
+  token: string,
+  ticketTypeId: number,
+  quantity: number,
+): Promise<Ticket[]> {
+  return request<Ticket[]>(`/api/events/${eventId}/tickets`, {
+    method: 'POST',
+    token,
+    body: { ticketTypeId, quantity },
+  });
 }

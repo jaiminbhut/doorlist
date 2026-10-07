@@ -1,4 +1,4 @@
-import type { PropsWithChildren, ReactElement } from 'react';
+import type { PropsWithChildren, ReactElement, Ref } from 'react';
 import {
   KeyboardAvoidingView,
   Platform,
@@ -11,10 +11,12 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 interface ScreenProps {
   /** Pull to refresh. */
   refreshControl?: ReactElement<RefreshControlProps>;
+  /** The scroll view, for a screen that scrolls something into view. */
+  ref?: Ref<ScrollView>;
 }
 
 /** A scrolling page on the lavender ground that keeps its fields above the keyboard. */
-export function Screen({ children, refreshControl }: PropsWithChildren<ScreenProps>) {
+export function Screen({ children, refreshControl, ref }: PropsWithChildren<ScreenProps>) {
   return (
     <SafeAreaView style={styles.safe} edges={['top', 'left', 'right']}>
       <KeyboardAvoidingView
@@ -22,6 +24,7 @@ export function Screen({ children, refreshControl }: PropsWithChildren<ScreenPro
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
       >
         <ScrollView
+          ref={ref}
           contentContainerStyle={styles.content}
           keyboardShouldPersistTaps="handled"
           refreshControl={refreshControl}

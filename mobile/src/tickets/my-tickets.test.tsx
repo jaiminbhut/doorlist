@@ -85,12 +85,15 @@ describe('My tickets', () => {
     });
   });
 
-  it('points to the website when there are no tickets yet', async () => {
+  it('points to Events when there are no tickets yet', async () => {
     requestMock.mockResolvedValue([]);
+    const app = await openApp(attendee);
 
-    await openApp(attendee);
+    expect(await screen.findByText(/No tickets yet. Pick an event under Events/)).toBeOnTheScreen();
+    await fireEvent.press(screen.getByRole('button', { name: 'See upcoming events' }));
 
-    expect(await screen.findByText(/No tickets yet. Claim tickets/)).toBeOnTheScreen();
+    expect(await screen.findByRole('header', { name: 'Upcoming events' })).toBeOnTheScreen();
+    expect(app.pathname()).toBe('/events');
   });
 
   it('opens a ticket full screen, brighter, and offline too', async () => {

@@ -76,6 +76,21 @@ export async function cacheTickets(
   });
 }
 
+/**
+ * Adds tickets just claimed, before My tickets has fetched them: the next
+ * place this phone goes may be a venue with no signal. Keeps the API's order,
+ * by event then by when each ticket was issued.
+ */
+export async function addTickets(owner: string, added: Ticket[], savedAt: string): Promise<void> {
+  const cached = await cachedTickets(owner);
+  const tickets = [...(cached?.tickets ?? []), ...added].sort(
+    (a, b) =>
+      Date.parse(a.startsAt) - Date.parse(b.startsAt) ||
+      Date.parse(a.issuedAt) - Date.parse(b.issuedAt),
+  );
+  await cacheTickets(owner, tickets, savedAt);
+}
+
 /** Signing out removes the tickets from the phone (ADR 9). */
 export async function forgetTickets(): Promise<void> {
   const db = await database();

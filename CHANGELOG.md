@@ -4,6 +4,14 @@ Notable changes to Doorlist, newest first. Versions follow [Semantic Versioning]
 
 ## Unreleased
 
+### Added
+
+- **Browsing events and claiming tickets in the app.**
+  - Attendees get an Events tab, with upcoming events listed as a lineup and how many tickets are left.
+  - On an event, they pick a ticket type and how many, up to 4 per event. When the API refuses, its reason shows, as on the web.
+  - New tickets are saved on the phone at once, in case the next stop has no signal. Then they arrive in My tickets, which scrolls to them.
+  - An empty My tickets now points to Events instead of the website.
+
 ### Changed
 
 - **The Android app asks for fewer permissions.** Release builds asked for 11. They now ask for 5: the camera, the network (and whether it's connected) and vibration. The template and libraries had added reading and writing storage, drawing over other apps, changing system settings and using fingerprints. The app uses none of them.

@@ -1,14 +1,14 @@
 import { router } from 'expo-router';
 import { useEffect, useState } from 'react';
-import { Pressable, RefreshControl, StyleSheet, View } from 'react-native';
+import { RefreshControl, StyleSheet, View } from 'react-native';
 import { AccountBar } from '@/auth/account-bar';
 import { ErrorText } from '@/components/error-text';
 import { Field } from '@/components/field';
 import { Screen } from '@/components/screen';
 import { Text } from '@/components/text';
 import { listEvents, type DoorlistEvent } from '@/events/events-api';
-import { formatDayAndMonth, formatWeekdayTime } from '@/format';
-import { displayType, size, usePalette } from '@/theme';
+import { Lineup, LineupRow } from '@/events/lineup';
+import { usePalette } from '@/theme';
 import { doorName, setDoorName } from './door-device';
 
 /** Picks the event to check tickets for, and names this door, as on the web. */
@@ -105,36 +105,11 @@ export function DoorPickerScreen() {
       ) : events.length === 0 ? (
         <Text style={{ color: palette.inkSoft }}>No upcoming events to check tickets for.</Text>
       ) : (
-        <View style={[styles.lineup, { borderTopColor: palette.line }]}>
-          {events.map((event) => {
-            const { day, month } = formatDayAndMonth(event.startsAt);
-            return (
-              <Pressable
-                key={event.id}
-                accessibilityRole="button"
-                accessibilityLabel={`${event.name}, ${event.venue}, ${formatWeekdayTime(event.startsAt)}`}
-                onPress={() => void open(event)}
-                style={({ pressed }) => [
-                  styles.event,
-                  { borderBottomColor: palette.line, opacity: pressed ? 0.7 : 1 },
-                ]}
-              >
-                <View style={styles.date}>
-                  <Text style={[styles.day, { color: palette.stamp }]}>{day}</Text>
-                  <Text variant="bold" style={[styles.month, { color: palette.stamp }]}>
-                    {month}
-                  </Text>
-                </View>
-                <View style={styles.what}>
-                  <Text style={styles.name}>{event.name}</Text>
-                  <Text style={[styles.meta, { color: palette.inkSoft }]}>
-                    {event.venue}, {formatWeekdayTime(event.startsAt)}
-                  </Text>
-                </View>
-              </Pressable>
-            );
-          })}
-        </View>
+        <Lineup>
+          {events.map((event) => (
+            <LineupRow key={event.id} event={event} onPress={() => void open(event)} />
+          ))}
+        </Lineup>
       )}
     </Screen>
   );
@@ -142,18 +117,4 @@ export function DoorPickerScreen() {
 
 const styles = StyleSheet.create({
   head: { gap: 10 },
-  lineup: { borderTopWidth: 1 },
-  event: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 18,
-    paddingVertical: 16,
-    borderBottomWidth: 1,
-  },
-  date: { width: 52, alignItems: 'center' },
-  day: displayType(size.display, size.display),
-  month: { fontSize: size.small, textTransform: 'uppercase', letterSpacing: 1 },
-  what: { flex: 1, gap: 2 },
-  name: displayType(size.title, size.title * 1.05),
-  meta: { fontSize: size.small },
 });
