@@ -2,7 +2,7 @@ import { Pressable, StyleSheet, View } from 'react-native';
 import Svg, { Line } from 'react-native-svg';
 import { Text } from '@/components/text';
 import { formatWhen } from '@/format';
-import { fonts, size, usePalette } from '@/theme';
+import { displayType, size, usePalette } from '@/theme';
 import { QrCode } from './qr-code';
 import type { Ticket } from './tickets-api';
 
@@ -68,7 +68,7 @@ const styles = StyleSheet.create({
   ticket: { overflow: 'hidden', borderRadius: 16 },
   body: { paddingHorizontal: 22, paddingTop: 22, paddingBottom: 20 },
   when: { marginBottom: 10, fontSize: size.small },
-  event: { fontFamily: fonts.display, fontSize: size.display, lineHeight: size.display * 1.02 },
+  event: displayType(size.display, size.display * 1.02),
   type: { marginTop: 18 },
   stub: {
     alignItems: 'center',
@@ -87,5 +87,5 @@ const styles = StyleSheet.create({
   },
   notchLeft: { left: -NOTCH },
   notchRight: { right: -NOTCH },
-  admit: { color: STUB_INK, fontFamily: fonts.display, fontSize: size.large, lineHeight: 22 },
+  admit: { color: STUB_INK, ...displayType(size.large, 22) },
 });

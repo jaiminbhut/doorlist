@@ -4,7 +4,7 @@ import { AccessibilityInfo, Animated, StyleSheet, View } from 'react-native';
 import { Button } from '@/components/button';
 import { Text } from '@/components/text';
 import { useReducedMotion } from '@/components/use-reduced-motion';
-import { fonts, radius, size, usePalette } from '@/theme';
+import { displayType, radius, size, usePalette } from '@/theme';
 import { toneOf, wordsFor, type Tone, type Verdict } from './verdict';
 
 const feel: Record<Tone, Haptics.NotificationFeedbackType> = {
@@ -95,8 +95,7 @@ const styles = StyleSheet.create({
     borderRadius: radius.surface,
   },
   ready: { borderWidth: 2, borderStyle: 'dashed' },
-  // A line height under the font size clips tall glyphs at the top on iOS.
-  decision: { fontFamily: fonts.display, fontSize: 64, lineHeight: 68 },
+  decision: displayType(64, 68),
   reason: { fontSize: size.large, lineHeight: size.large * 1.35 },
   action: { marginTop: 10, alignSelf: 'flex-start' },
 });

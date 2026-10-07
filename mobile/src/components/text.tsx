@@ -1,5 +1,5 @@
 import { Text as NativeText, StyleSheet, type TextProps } from 'react-native';
-import { fonts, size, usePalette } from '@/theme';
+import { displayType, fonts, size, usePalette } from '@/theme';
 
 type Variant = 'body' | 'bold' | 'display';
 
@@ -12,5 +12,5 @@ export function Text({ variant = 'body', style, ...props }: TextProps & { varian
 const styles = StyleSheet.create({
   body: { fontFamily: fonts.text, fontSize: size.body, lineHeight: size.body * 1.55 },
   bold: { fontFamily: fonts.textBold, fontSize: size.body, lineHeight: size.body * 1.55 },
-  display: { fontFamily: fonts.display, fontSize: size.display, lineHeight: size.display * 0.95 },
+  display: displayType(size.display, size.display * 0.95),
 });

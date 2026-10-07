@@ -2,6 +2,12 @@
 
 Notable changes to Doorlist, newest first. Versions follow [Semantic Versioning](https://semver.org/).
 
+## Unreleased
+
+### Fixed
+
+- **The app's screen titles were cut off at the top on iOS.** Big Shoulders is set tighter than its own line height, as on the web, where the tops overflow and still show. iOS clips them instead. Titles like "Sign in" lost the top 2 to 3 points of every letter, and the door's event name and day numbers lost about half a point. They keep their tight leading and now show in full.
+
 ## 1.1.0 (2026-10-07)
 
 The mobile app. Attendees carry their tickets on their phone, and door staff check tickets with the phone's camera, with or without a connection ([ADR 9](docs/adr/0009-mobile-app-navigation-storage-and-offline-signatures.md)). The API and its schema are unchanged. The app itself is version 0.1.0 and isn't in the app stores yet.

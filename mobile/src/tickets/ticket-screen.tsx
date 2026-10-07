@@ -5,7 +5,7 @@ import { Platform, Pressable, StyleSheet, View, useWindowDimensions } from 'reac
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Text } from '@/components/text';
 import { formatWhen } from '@/format';
-import { fonts, size } from '@/theme';
+import { displayType, size } from '@/theme';
 import { QrCode } from './qr-code';
 import { cachedTickets } from './ticket-cache';
 import type { Ticket } from './tickets-api';
@@ -112,13 +112,11 @@ const styles = StyleSheet.create({
   when: { color: PAPER_INK, fontSize: size.small },
   event: {
     color: PAPER_INK,
-    fontFamily: fonts.display,
-    fontSize: size.display,
-    lineHeight: size.display * 1.02,
+    ...displayType(size.display, size.display * 1.02),
     textAlign: 'center',
   },
   ink: { color: PAPER_INK, textAlign: 'center' },
   qr: { marginTop: 18, marginBottom: 10 },
-  admit: { color: PAPER_INK, fontFamily: fonts.display, fontSize: size.title, lineHeight: 30 },
+  admit: { color: PAPER_INK, ...displayType(size.title, 30) },
   missing: { padding: 24 },
 });
