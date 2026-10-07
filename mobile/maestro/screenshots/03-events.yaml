@@ -1,0 +1,9 @@
+# Upcoming events, from the Events tab.
+appId: com.devtownhall.doorlist
+---
+- tapOn: Done
+- tapOn: 'Events, .*'
+# Each event's accessibility label hides the text inside it.
+- extendedWaitUntil:
+    visible: 'Community Run 5K, .* left'
+    timeout: 15000

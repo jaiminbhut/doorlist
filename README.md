@@ -27,14 +27,14 @@ Doorlist is also a public reference project. Alongside the features, it shows ho
 ## The mobile app
 
 <p align="center">
+  <img src="docs/screenshots/app-event.png" width="250" alt="An event in the app: its date and venue, ticket types with how many are left, and two tickets chosen to claim">
   <img src="docs/screenshots/app-tickets.png" width="250" alt="The app's My tickets: violet paper tickets, each with a QR code on a white stub">
-  <img src="docs/screenshots/app-door.png" width="250" alt="The app's door console admitting a ticket online, with the holder's name and ticket type">
   <img src="docs/screenshots/app-door-offline.png" width="250" alt="The door console offline: a genuine ticket admitted in amber, and two scans waiting to sync">
 </p>
 
 An Expo app for iOS and Android, with the web's look ([ADR 9](docs/adr/0009-mobile-app-navigation-storage-and-offline-signatures.md)).
 
-- **Attendees** see their tickets. They're saved on the phone, so the QR codes show without a connection.
+- **Attendees** browse upcoming events and claim tickets, up to 4 per event, as on the web. Their tickets are saved on the phone, so the QR codes show without a connection.
 - **Door staff** scan with the camera, a Bluetooth scanner or a pasted code, under the web door's rules. Online, the server decides. Offline, the phone checks each signature itself, queues the scans, and after syncing flags any ticket another door let in first.
 - **Version 0.1.0,** not in the app stores. It has run on the iOS Simulator and an Android emulator. Reading a QR code with a camera still needs a real phone.
 

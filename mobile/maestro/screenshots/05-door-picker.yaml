@@ -1,7 +1,7 @@
 # Door staff, naming the door before picking the event.
 appId: com.devtownhall.doorlist
 ---
-- tapOn: Done
+- tapOn: 'My tickets, .*'
 - tapOn:
     id: sign-out
 - tapOn:

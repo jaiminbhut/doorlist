@@ -1,0 +1,8 @@
+# An event, with two tickets chosen to claim.
+appId: com.devtownhall.doorlist
+---
+- tapOn: 'Community Run 5K, .*'
+- extendedWaitUntil:
+    visible: 'Runner, .* left'
+    timeout: 15000
+- tapOn: 2 tickets

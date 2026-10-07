@@ -32,8 +32,11 @@ type Action =
 function reducer(state: State, action: Action): State {
   switch (action.type) {
     case 'cached':
-      // The cache can land after the API has answered; the API's answer wins.
-      return state.status === 'current' ? state : { ...state, ...action };
+      // The cache can land after the API has answered: it's ignored only if
+      // what's on screen is newer. Just after a claim, the cache is the newer.
+      return state.fetchedAt !== null && Date.parse(state.fetchedAt) > Date.parse(action.fetchedAt)
+        ? state
+        : { ...state, tickets: action.tickets, fetchedAt: action.fetchedAt };
     case 'fetched':
       return {
         status: 'current',
@@ -51,9 +54,10 @@ function reducer(state: State, action: Action): State {
 /**
  * The signed-in person's tickets: the cached copy at once, then the API's,
  * which replaces the cache (ADR 9). Without a connection, or with an expired
- * token, the cached tickets stay on screen, QR codes and all.
+ * token, the cached tickets stay on screen, QR codes and all. A new
+ * `claimed` reads both again, after a claim has added tickets to the cache.
  */
-export function useMyTickets(session: Session): MyTickets {
+export function useMyTickets(session: Session, claimed = ''): MyTickets {
   const owner = session.user.email;
   const token = session.accessToken;
   const [attempt, setAttempt] = useState(0);
@@ -74,7 +78,7 @@ export function useMyTickets(session: Session): MyTickets {
     return () => {
       current = false;
     };
-  }, [owner, token, attempt]);
+  }, [owner, token, attempt, claimed]);
 
   return {
     ...state,

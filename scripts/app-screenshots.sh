@@ -138,8 +138,12 @@ echo "Taking the screenshots"
 xcrun simctl privacy "$udid" grant camera "$app_id"
 xcrun simctl ui "$udid" appearance light
 # A fresh start. Not Maestro's launchApp: with clearState, it hangs when the
-# app isn't running. front() launches it before the first flow.
-xcrun simctl terminate "$udid" "$app_id" >/dev/null 2>&1 || true
+# app isn't running. front() launches it before the first flow. Other builds
+# of the app close too: launched over one, it shows "◀ Doorlist Dev" in the
+# status bar.
+for id in "$app_id" "$app_id.dev" "$app_id.preview"; do
+  xcrun simctl terminate "$udid" "$id" >/dev/null 2>&1 || true
+done
 
 flow 00-reset
 shot sign-in
@@ -151,17 +155,21 @@ shot tickets-dark
 xcrun simctl ui "$udid" appearance light
 flow 02-ticket
 shot ticket
-flow 03-door-picker
+flow 03-events
+shot events
+flow 04-event
+shot event
+flow 05-door-picker
 shot door-picker
-flow 04-door-online -e CODE="$(code online)"
+flow 06-door-online -e CODE="$(code online)"
 shot door
 "${compose[@]}" stop api >/dev/null 2>&1
-flow 05-door-offline -e CODE_A="$(code offlineA)" -e CODE_B="$(code offlineB)"
+flow 07-door-offline -e CODE_A="$(code offlineA)" -e CODE_B="$(code offlineB)"
 shot door-offline
 "${compose[@]}" start api >/dev/null 2>&1
 api_healthy
-flow 06-door-synced
+flow 08-door-synced
 shot door-synced
-flow 07-sign-out
+flow 09-sign-out
 
 echo "Done: docs/screenshots/app-*.png"
