@@ -2,6 +2,42 @@
 
 Notable changes to Doorlist, newest first. Versions follow [Semantic Versioning](https://semver.org/).
 
+## 1.1.0 (2026-10-07)
+
+The mobile app. Attendees carry their tickets on their phone, and door staff check tickets with the phone's camera, with or without a connection ([ADR 9](docs/adr/0009-mobile-app-navigation-storage-and-offline-signatures.md)). The API and its schema are unchanged. The app itself is version 0.1.0 and isn't in the app stores yet.
+
+### For attendees and door staff
+
+- **Sign in and sign up,** with the web's messages. A session lasts until sign-out. When its token expires, the app asks for the password again and keeps the saved tickets and queued scans.
+- **My tickets:**
+  - Paper stubs with the QR code, as on the web. A tapped ticket fills the screen at full brightness.
+  - The tickets are saved on the phone, so they show and scan offline.
+  - Claiming stays on the web for now.
+- **The door:**
+  - Door staff pick an event and name the door. They scan with the camera, or type or paste a code, or use a Bluetooth scanner.
+  - Online, the server's answer is final, in the web's words. Each verdict comes with a haptic and is announced to screen readers.
+  - The camera reads each code once, not once per frame.
+  - Offline, or when the server doesn't answer within 4 seconds, the phone checks the signature itself. It refuses tickets it has let in or seen used, and queues the scans.
+  - It syncs when the connection or the app comes back, every 20 seconds while scans wait, and on "Sync now". It lists any ticket another door let in first.
+  - Queued scans survive an expired session and signing out.
+
+### Under the hood
+
+- **App:** Expo SDK 57 (React Native 0.86, TypeScript) with Expo Router, each role's screens guarded by role. SecureStore holds the session and SQLite holds the rest. An offline admission and its queued scan are saved in one transaction.
+- **Builds:** development, preview and production, each with its own name, bundle id, URL scheme and API address. Only a development build works the API address out by itself.
+- **Signatures on the phone:** `@noble/curves` P-256, with `lowS: false`. Of 1,000 codes from the API's signer, 501 had a high `s`, which noble's defaults would have refused.
+- **Shared test vectors:** [`test-vectors/ticket-codes.json`](test-vectors/ticket-codes.json), made by the API's own signer and checked by the API, web and mobile tests.
+- **Tests:**
+  - 95 Jest tests, the storage ones running the app's real SQL on Node's SQLite.
+  - A new CI job runs Prettier, ESLint, the type check, Jest, expo-doctor and a Hermes bundle for both platforms.
+  - Each pull request was also checked on the iOS Simulator, online and offline, against a local stack.
+
+### Not checked yet
+
+- **Android** compiles, but hasn't run on an emulator or a phone.
+- **Camera scanning** needs a real phone, because the simulator has no camera. Typed codes go through the same checks.
+- **Speed on a phone:** a signature check takes about 36 ms on the simulator, in a Release build. A phone will be slower.
+
 ## 1.0.0 (2026-10-06)
 
 The first release. The project began as Shiplog, a release tracker, and became Doorlist: free event tickets with door check-in ([ADR 6](docs/adr/0006-from-release-tracking-to-event-ticketing.md)).
