@@ -1,0 +1,19 @@
+# Asha Rao's tickets.
+appId: com.devtownhall.doorlist
+---
+- tapOn:
+    id: sign-in-email
+- inputText: asha@example.com
+- tapOn:
+    id: sign-in-password
+- inputText: Doorlist-demo-2026
+- tapOn:
+    id: sign-in-submit
+# iOS offers to save the password, in a sheet over the app.
+- tapOn:
+    text: Not Now
+    optional: true
+# A stub's accessibility label hides the text inside it, so match the label.
+- extendedWaitUntil:
+    visible: 'General admission ticket for Friday Night Jazz, Friday.*'
+    timeout: 20000

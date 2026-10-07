@@ -1,0 +1,22 @@
+# Starts from the sign-in screen, whoever an earlier run left signed in.
+appId: com.devtownhall.doorlist
+---
+- extendedWaitUntil:
+    visible:
+      id: 'sign-in-submit|sign-out'
+    timeout: 20000
+- runFlow:
+    when:
+      visible:
+        id: sign-out
+    commands:
+      - tapOn:
+          id: sign-out
+      # The alert's button, not the one that opened it.
+      - tapOn:
+          text: Sign out
+          index: 1
+- extendedWaitUntil:
+    visible:
+      id: sign-in-submit
+    timeout: 10000

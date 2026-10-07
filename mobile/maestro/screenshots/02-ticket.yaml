@@ -1,0 +1,7 @@
+# A ticket, full screen.
+appId: com.devtownhall.doorlist
+---
+- tapOn: 'General admission ticket for Friday Night Jazz, .*'
+- extendedWaitUntil:
+    visible: Done
+    timeout: 10000

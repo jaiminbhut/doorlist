@@ -1,0 +1,11 @@
+# The throwaway stack for the app screenshots (scripts/app-screenshots.sh):
+# the API on port 5090 and nothing else published, so it runs alongside the
+# local stack on 1433, 5080 and 8080.
+services:
+  db:
+    ports: !reset []
+  api:
+    ports: !override
+      - '5090:8080'
+  web:
+    ports: !reset []

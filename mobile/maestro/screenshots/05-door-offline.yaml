@@ -1,0 +1,38 @@
+# The door without a connection (the script has stopped the API): the phone
+# admits ${CODE_A} and ${CODE_B} by itself and queues both.
+appId: com.devtownhall.doorlist
+---
+- tapOn:
+    id: door-code
+- inputText: ${CODE_A}
+- tapOn:
+    id: door-check
+- extendedWaitUntil:
+    visible: 'Offline: checking on this phone'
+    timeout: 15000
+# The keyboard covers the sync count.
+- hideKeyboard
+- scrollUntilVisible:
+    element: 1 waiting to sync
+    direction: DOWN
+- scrollUntilVisible:
+    element:
+      id: door-code
+    direction: UP
+- tapOn:
+    id: door-code
+- inputText: ${CODE_B}
+- tapOn:
+    id: door-check
+- hideKeyboard
+- scrollUntilVisible:
+    element: 2 waiting to sync
+    direction: DOWN
+# A short, slow swipe brings the offline badge back into view with the count.
+# It starts below the camera view, which keeps touches that start on it.
+- swipe:
+    start: 50%, 80%
+    end: 50%, 85%
+    duration: 2000
+- assertVisible: 'Offline: checking on this phone'
+- assertVisible: 2 waiting to sync

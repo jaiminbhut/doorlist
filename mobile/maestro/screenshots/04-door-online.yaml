@@ -1,0 +1,19 @@
+# The door with a connection: the server admits ${CODE}.
+appId: com.devtownhall.doorlist
+---
+- tapOn: 'Frontend Meetup: Signals in Practice, .*'
+# The tally shows once the console has heard from the server.
+- extendedWaitUntil:
+    visible: '.* of .* admitted'
+    timeout: 20000
+- assertNotVisible: 'No ticket key yet.*'
+- tapOn:
+    id: door-code
+- inputText: ${CODE}
+- tapOn:
+    id: door-check
+- extendedWaitUntil:
+    visible: Admit
+    timeout: 10000
+- assertNotVisible: 'Offline: .*'
+- hideKeyboard

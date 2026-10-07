@@ -1,0 +1,16 @@
+# Leaves the app signed out, for the next run.
+appId: com.devtownhall.doorlist
+---
+- scrollUntilVisible:
+    element: '.*Change event'
+    direction: UP
+- tapOn: '.*Change event'
+- tapOn:
+    id: sign-out
+- tapOn:
+    text: Sign out
+    index: 1
+- extendedWaitUntil:
+    visible:
+      id: sign-in-submit
+    timeout: 10000
