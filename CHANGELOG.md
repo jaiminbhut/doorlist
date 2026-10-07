@@ -4,6 +4,10 @@ Notable changes to Doorlist, newest first. Versions follow [Semantic Versioning]
 
 ## Unreleased
 
+### Changed
+
+- **The Android app asks for fewer permissions.** Release builds asked for 11. They now ask for 5: the camera, the network (and whether it's connected) and vibration. The template and libraries had added reading and writing storage, drawing over other apps, changing system settings and using fingerprints. The app uses none of them.
+
 ### Fixed
 
 - **The app's screen titles were cut off at the top on iOS.** Big Shoulders is set tighter than its own line height, as on the web, where the tops overflow and still show. iOS clips them instead. Titles like "Sign in" lost the top 2 to 3 points of every letter, and the door's event name and day numbers lost about half a point. They keep their tight leading and now show in full. Android never clipped them, and looks the same with the fix.
