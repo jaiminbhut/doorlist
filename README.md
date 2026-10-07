@@ -12,7 +12,7 @@ More in [docs/screenshots](docs/screenshots), at desktop size and in dark mode. 
 
 Doorlist is also a public reference project. Alongside the features, it shows how the whole product is built and run: an Angular front end, a React Native app, an ASP.NET Core API on SQL Server, EF Core migrations that run as their own deploy step and are checked against the running API, Docker, CI on every pull request, a rehearsed deploy pipeline, and the decisions behind each of these, written down.
 
-> **Status:** [v1.1.0](CHANGELOG.md). Doorlist works end to end: events, sign-up, claiming, QR tickets, and door check-in that keeps working offline, tested in a real browser on every pull request. The [mobile app](#the-mobile-app) carries attendees' tickets and checks them at the door, offline too, so far tested on the iOS Simulator only. The deploy pipeline is built and rehearsed, and the live demo waits for its server. This project started as Shiplog, a release tracker ([ADR 6](docs/adr/0006-from-release-tracking-to-event-ticketing.md)).
+> **Status:** [v1.1.0](CHANGELOG.md). Doorlist works end to end: events, sign-up, claiming, QR tickets, and door check-in that keeps working offline, tested in a real browser on every pull request. The [mobile app](#the-mobile-app) carries attendees' tickets and checks them at the door, offline too, tested on the iOS Simulator and an Android emulator. The deploy pipeline is built and rehearsed, and the live demo waits for its server. This project started as Shiplog, a release tracker ([ADR 6](docs/adr/0006-from-release-tracking-to-event-ticketing.md)).
 
 ## What it does
 
@@ -36,7 +36,7 @@ An Expo app for iOS and Android, with the web's look ([ADR 9](docs/adr/0009-mobi
 
 - **Attendees** see their tickets. They're saved on the phone, so the QR codes show without a connection.
 - **Door staff** scan with the camera, a Bluetooth scanner or a pasted code, under the web door's rules. Online, the server decides. Offline, the phone checks each signature itself, queues the scans, and after syncing flags any ticket another door let in first.
-- **Version 0.1.0,** not in the app stores. It has run on the iOS Simulator. Android compiles but hasn't run yet, and camera scanning still needs a real phone.
+- **Version 0.1.0,** not in the app stores. It has run on the iOS Simulator and an Android emulator. Reading a QR code with a camera still needs a real phone.
 
 More app screens are in [docs/screenshots](docs/screenshots) (`app-*.png`). Maestro flows take them from a Release build on the iOS Simulator (`scripts/app-screenshots.sh`). To run the app, see [CONTRIBUTING.md](CONTRIBUTING.md#the-mobile-app).
 
