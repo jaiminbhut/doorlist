@@ -28,6 +28,12 @@ export function ticket(overrides: Partial<Ticket> = {}): Ticket {
   };
 }
 
+// The first test in a file that opens the app transforms every route module as
+// it renders them. With a cold transform cache, as on CI, that takes 3.7 s on a
+// laptop and more than Jest's default 5 s on a CI runner. Every file that
+// opens the app imports this one, so they all get the longer limit.
+jest.setTimeout(20_000);
+
 /**
  * Renders the real routes in src/app, signed in as `stored` if given.
  * renderRouter returns the render promise with the router's helpers attached.
