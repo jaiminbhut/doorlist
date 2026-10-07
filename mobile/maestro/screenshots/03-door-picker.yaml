@@ -1,0 +1,31 @@
+# Door staff, naming the door before picking the event.
+appId: com.devtownhall.doorlist
+---
+- tapOn: Done
+- tapOn:
+    id: sign-out
+- tapOn:
+    text: Sign out
+    index: 1
+- tapOn:
+    id: sign-in-email
+- inputText: door@example.com
+- tapOn:
+    id: sign-in-password
+- inputText: Doorlist-demo-2026
+- tapOn:
+    id: sign-in-submit
+- tapOn:
+    text: Not Now
+    optional: true
+# Each event's accessibility label hides the text inside it.
+- extendedWaitUntil:
+    visible: 'Frontend Meetup: Signals in Practice, .*'
+    timeout: 20000
+- tapOn:
+    id: door-name
+# The door name belongs to the phone, so an earlier run's may still be there.
+- eraseText
+- inputText: North door
+# Tapping the introduction puts the keyboard away.
+- tapOn: 'Pick the event.*'

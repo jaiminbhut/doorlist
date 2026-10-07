@@ -38,7 +38,7 @@ An Expo app for iOS and Android, with the web's look ([ADR 9](docs/adr/0009-mobi
 - **Door staff** scan with the camera, a Bluetooth scanner or a pasted code, under the web door's rules. Online, the server decides. Offline, the phone checks each signature itself, queues the scans, and after syncing flags any ticket another door let in first.
 - **Version 0.1.0,** not in the app stores. It has run on the iOS Simulator. Android compiles but hasn't run yet, and camera scanning still needs a real phone.
 
-More app screens are in [docs/screenshots](docs/screenshots) (`app-*.png`), taken from a Release build on the iOS Simulator. To run the app, see [CONTRIBUTING.md](CONTRIBUTING.md#the-mobile-app).
+More app screens are in [docs/screenshots](docs/screenshots) (`app-*.png`). Maestro flows take them from a Release build on the iOS Simulator (`scripts/app-screenshots.sh`). To run the app, see [CONTRIBUTING.md](CONTRIBUTING.md#the-mobile-app).
 
 ## Stack
 
@@ -99,10 +99,11 @@ api/                     ASP.NET Core API, EF Core, migrations, tests
 web/                     Angular app
   e2e/                   Playwright browser tests
 mobile/                  Expo app for attendees and door staff
+  maestro/               Maestro flows that take the app screenshots
 docs/adr/                Architecture decision records
 deploy/                  Server setup, Caddy, compose files and the deploy script
 .github/workflows/       CI (build, tests, migration checks, schema compatibility, smoke and browser tests, mobile checks) and Deploy
-scripts/                 Schema compatibility check, browser tests, deploy rehearsal, GitHub deploy setup, ticket-code test vectors
+scripts/                 Schema compatibility check, browser tests, app screenshots, deploy rehearsal, GitHub deploy setup, ticket-code test vectors
 test-vectors/            Ticket codes made by the API's signer, checked by the API, web and mobile tests
 docker-compose.yml       Local stack
 ```

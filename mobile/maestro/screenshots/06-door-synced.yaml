@@ -1,0 +1,15 @@
+# The connection is back (the script has started the API): the queue syncs,
+# and the ticket the South door let in first is flagged.
+appId: com.devtownhall.doorlist
+---
+# Optional: the door may have synced by itself already.
+- tapOn:
+    text: Sync now
+    optional: true
+- extendedWaitUntil:
+    visible: 0 waiting to sync
+    timeout: 30000
+- scrollUntilVisible:
+    element: 'first admitted at South door.*'
+    direction: DOWN
+- assertVisible: 'Let in twice: flagged after syncing'

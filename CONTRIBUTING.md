@@ -41,6 +41,8 @@ npm run ios                    # or: npm run android
 
 A development build finds the API by itself: port 5080 on the computer that runs Metro. That works from the simulator, the emulator, and a phone on the same network. To use another API, set `EXPO_PUBLIC_API_URL`, for example in `mobile/.env.local`. Preview and production builds take the address from their profile in `mobile/eas.json`, and never guess.
 
+To retake the app screenshots in `docs/screenshots`, boot an iPhone 17 Pro simulator, install [Maestro](https://maestro.dev), and run `scripts/app-screenshots.sh`. It builds the production variant in a copy of `mobile/` and runs it against a throwaway stack on port 5090, so your development build is left alone. It takes about 15 minutes. With `--no-build`, it reuses the app the last run installed.
+
 ### Apple Silicon
 
 The SQL Server image is linux/amd64 only. With Colima, start the VM with Rosetta:
