@@ -1,6 +1,6 @@
 import { StyleSheet, View } from 'react-native';
 import Svg, { Circle, Path } from 'react-native-svg';
-import { fonts, usePalette } from '@/theme';
+import { displayType, usePalette } from '@/theme';
 import { Text } from './text';
 
 /** The door mark and name, as in the web's header. */
@@ -19,5 +19,5 @@ export function Wordmark() {
 
 const styles = StyleSheet.create({
   row: { flexDirection: 'row', alignItems: 'center', gap: 10 },
-  name: { fontFamily: fonts.display, fontSize: 32, lineHeight: 34 },
+  name: displayType(32, 34),
 });

@@ -8,7 +8,7 @@ import type { Session } from '@/auth/session';
 import { SignInAgainSheet } from '@/auth/sign-in-again-sheet';
 import { Text } from '@/components/text';
 import { formatTime } from '@/format';
-import { fonts, radius, size, usePalette } from '@/theme';
+import { displayType, fonts, radius, size, usePalette } from '@/theme';
 import { CameraScanner } from './camera-scanner';
 import { ScanLock } from './scan-lock';
 import { useDoorConsole } from './use-door-console';
@@ -228,7 +228,7 @@ const styles = StyleSheet.create({
   screen: { flex: 1 },
   content: { gap: 20, padding: 20, paddingBottom: 40 },
   back: { fontSize: size.small },
-  event: { fontFamily: fonts.display, fontSize: size.display, lineHeight: size.display },
+  event: displayType(size.display, size.display),
   manual: { gap: 8 },
   label: { fontSize: size.small },
   row: { flexDirection: 'row', gap: 10 },

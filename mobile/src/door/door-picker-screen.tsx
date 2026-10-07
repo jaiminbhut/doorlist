@@ -8,7 +8,7 @@ import { Screen } from '@/components/screen';
 import { Text } from '@/components/text';
 import { listEvents, type DoorlistEvent } from '@/events/events-api';
 import { formatDayAndMonth, formatWeekdayTime } from '@/format';
-import { fonts, size, usePalette } from '@/theme';
+import { displayType, size, usePalette } from '@/theme';
 import { doorName, setDoorName } from './door-device';
 
 /** Picks the event to check tickets for, and names this door, as on the web. */
@@ -151,9 +151,9 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
   },
   date: { width: 52, alignItems: 'center' },
-  day: { fontFamily: fonts.display, fontSize: size.display, lineHeight: size.display },
+  day: displayType(size.display, size.display),
   month: { fontSize: size.small, textTransform: 'uppercase', letterSpacing: 1 },
   what: { flex: 1, gap: 2 },
-  name: { fontFamily: fonts.display, fontSize: size.title, lineHeight: size.title * 1.05 },
+  name: displayType(size.title, size.title * 1.05),
   meta: { fontSize: size.small },
 });
